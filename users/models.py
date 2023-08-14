@@ -10,8 +10,11 @@ def validate_image(image):
         raise ValidationError(f"Maximum size of profile image is {limit_mb} MB")
 
 
+help_text_for_position = 'Optional: State your position. For example: teacher, student, scientist, etc..'
+
 
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
+    position = models.CharField(null=True, help_text=help_text_for_position, max_length=255)
     image = models.ImageField(null=True, blank=True,
                               upload_to='users/images', validators=[validate_image])
