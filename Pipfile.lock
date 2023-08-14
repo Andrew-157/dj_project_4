@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "31e5caca6a4c84544d59e7e6d8fd99bd8c314e0fbdd40ee24c3a9172877df7ce"
+            "sha256": "275c86043b42929676832d739c7261fb1491631694e4d7eb6e712e69b1cd9a30"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -71,6 +71,14 @@
             ],
             "index": "pypi",
             "version": "==0.10.0"
+        },
+        "django-formtools": {
+            "hashes": [
+                "sha256:21f8d5dac737f1e636fa8a0a10969c1c32f525a6dfa27c29592827ba70d9643a",
+                "sha256:49ea8a64ddef4728a558bf5f8f622c0f4053b979edcf193bf00dd80432ab2f12"
+            ],
+            "index": "pypi",
+            "version": "==2.4.1"
         },
         "mysqlclient": {
             "hashes": [

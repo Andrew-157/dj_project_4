@@ -12,6 +12,7 @@ pillow = "*"
 crispy-bootstrap5 = "*"
 django-crispy-forms = "*"
 django-cleanup = "*"
+django-formtools = "*"
 
 [dev-packages]
 autopep8 = "*"
