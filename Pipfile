@@ -9,6 +9,9 @@ django-debug-toolbar = "*"
 mysqlclient = "*"
 django-environ = "*"
 pillow = "*"
+crispy-bootstrap5 = "*"
+django-crispy-forms = "*"
+django-cleanup = "*"
 
 [dev-packages]
 autopep8 = "*"
