@@ -1,0 +1,32 @@
+<nav class="navbar navbar-expand-sm navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="{% url 'core:index' %}">Studilee</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mynavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mynavbar">
+            {% if not user.is_authenticated %}
+            <ul class="nav nav-pills justify-content-end">
+                <li class="nav-item">
+                    <a class="nav-link" href="">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'users:register' %}">Register</a>
+                </li>
+            </ul>
+            {% else %}
+            <ul class="nav nav-pills justify-content-end">
+                <li class="nav-item">
+                    <a href="" class="nav-link">{{ user }}</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="">Change profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="">Logout</a>
+                </li>
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</nav>

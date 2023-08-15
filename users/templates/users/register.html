@@ -1,0 +1,38 @@
+{% extends 'core/base.html' %}
+
+{% block head %}
+{{ wizard.form.media }}
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center">
+        <h1>Registration</h1>
+    </div>
+    {% load crispy_forms_tags %}
+    <p class="text-primary">Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>
+    <form action="{% url 'users:register' %}" method="post">
+        {% csrf_token %}
+        {{ wizard.management_form }}
+        {% if management.form.forms %}
+        {{ wizard.management_form }}
+        {% for form in wizard.form.forms %}
+        {{ form|crispy }}
+        {% endfor %}
+        {% else %}
+        {{ wizard.form|crispy }}
+        {% endif %}
+        {% if not wizard.steps.prev %}
+        <input class="btn btn-primary" type="submit" value="Next">
+        {% elif not wizard.steps.next %}
+        <button name="wizard_goto_step" type="submit" class="btn btn-outline-primary"
+            value="{{ wizard.steps.prev }}">Previous</button>
+        <button class="btn btn-primary" type="submit">Register</button>
+        {% else %}
+        <button name="wizard_goto_step" type="submit" class="btn btn-outline-primary"
+            value="{{ wizard.steps.prev }}">Previous</button>
+        <input class="btn btn-primary" type="submit" value="Next">
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
