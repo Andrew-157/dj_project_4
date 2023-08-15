@@ -151,6 +151,11 @@ MESSAGE_TAGS = {
     messages.ERROR: 'alert-danger',
 }
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'users.authentication.EmailAuthBackend'
+]
+
 INTERNAL_IPS = [
     # ...
     "127.0.0.1",

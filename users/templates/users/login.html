@@ -1,0 +1,21 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+{% load crispy_forms_tags %}
+<div class="container py-5">
+    <h1 class="text-center">Login</h1>
+    {% if username == True %}
+    <form action="{% url 'users:login-username' %}" method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    {% elif email == True %}
+    <form action="{% url 'users:login-email' %}" method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

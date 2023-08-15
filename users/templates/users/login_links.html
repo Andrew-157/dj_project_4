@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center">Login</h1>
+    <div class="container py-5">
+        <div class="text-center">
+            <div class="btn-group-vertical gap-3">
+                <a class="text-decoration-none" href="{% url 'users:login-username' %}">
+                    <button class="btn btn-primary" style="width: 500px;height: 50px;">Login with username</button>
+                </a>
+                <a class="text-decoration-none" href="{% url 'users:login-email' %}">
+                    <button class="btn btn-primary" style="width: 500px;height: 50px;">Login with email</button>
+                </a>
+            </div>
+            <div class="container py-5">
+                <p>
+                    Do not have an account?
+                    <a href="{% url 'users:register' %}">Register</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

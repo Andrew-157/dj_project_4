@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 
 from users.models import CustomUser
 
@@ -45,3 +45,24 @@ class RegistrationStep4Form(UserCreationForm):
     class Meta:
         model = CustomUser
         fields = ['password1', 'password2']
+
+
+class LoginWithEmailForm(AuthenticationForm):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Email'
+        self.error_messages = {
+            'invalid_login': "Please enter a correct email and password. Note that both fields may be case-sensitive.",
+            'inactive': "This account is inactive.",
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('username')
+        password = cleaned_data.get('password')
+
+        if email and password:
+            self.cleaned_data['email'] = email.lower()
+
+        return self.cleaned_data
