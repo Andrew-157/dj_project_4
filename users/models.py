@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
 from django.contrib.auth.models import AbstractUser
 
 
@@ -15,4 +16,5 @@ def validate_image(image):
 class CustomUser(AbstractUser):
     email = models.EmailField(
         unique=True, help_text='Required. Enter valid email address.')
-    position = models.CharField(null=True, max_length=255)
+    position = models.CharField(null=True, max_length=255, validators=[
+                                MinLengthValidator(3)], blank=True)

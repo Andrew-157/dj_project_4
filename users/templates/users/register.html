@@ -8,6 +8,9 @@
 <div class="container py-5">
     <div class="text-center">
         <h1>Registration</h1>
+        <p>Already have an account?
+            <a href="{% url 'users:login' %}">Login</a>
+        </p>
     </div>
     {% load crispy_forms_tags %}
     <p class="text-primary">Step {{ wizard.steps.step1 }} of {{ wizard.steps.count }}</p>

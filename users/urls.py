@@ -14,5 +14,6 @@ urlpatterns = [
     path('login/', TemplateView.as_view(template_name='users/login_links.html'), name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('authenticate/',
-         TemplateView.as_view(template_name='users/become_user.html'), name='become-user')
+         TemplateView.as_view(template_name='users/become_user.html'), name='become-user'),
+    path('profile/update', views.ChangeUserView.as_view(), name='change-user')
 ]

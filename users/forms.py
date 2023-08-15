@@ -1,6 +1,7 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, \
+    UserChangeForm as BaseUserChangeForm
 
 from users.models import CustomUser
 
@@ -35,7 +36,7 @@ class RegistrationStep2Form(forms.Form):
 
 
 class RegistrationStep3Form(forms.Form):
-    position = forms.CharField(max_length=255,  required=False,
+    position = forms.CharField(max_length=255,  required=False, min_length=3,
                                help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.',
                                label='Position*')
 
@@ -66,3 +67,23 @@ class LoginWithEmailForm(AuthenticationForm):
             self.cleaned_data['email'] = email.lower()
 
         return self.cleaned_data
+
+
+class UserChangeForm(BaseUserChangeForm):
+    password = None
+
+    class Meta:
+        model = CustomUser
+        fields = ['username', 'email', 'position']
+
+    def clean(self):
+        cleaned_data = super().clean()
+        username = cleaned_data.get('username')
+
+        if username and len(username) < 5:
+            msg = 'Username cannot be shorter than 5 characters.'
+            
+            self.add_error('username', msg)
+
+        return self.cleaned_data
+

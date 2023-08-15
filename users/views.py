@@ -2,15 +2,17 @@ from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.utils.decorators import method_decorator
 from django.forms import Form
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views import View
 from formtools.wizard.views import SessionWizardView
+from django.http.request import HttpRequest
 
 from users.models import CustomUser
 from users.forms import RegistrationStep1Form, RegistrationStep2Form, RegistrationStep3Form, \
-    RegistrationStep4Form, LoginWithEmailForm
+    RegistrationStep4Form, LoginWithEmailForm, UserChangeForm
 
 
 def process_form_data(form_list: list[Form]) -> CustomUser:
@@ -103,3 +105,26 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have successfully logged out')
     return redirect('core:index')
+
+
+class ChangeUserView(View):
+    template_name = 'users/change_user.html'
+    form_class = UserChangeForm
+
+    def get(self, request: HttpRequest, *args, **kwargs):
+        current_user = request.user
+        form = self.form_class(instance=current_user)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        current_user = request.user
+        form = self.form_class(request.POST, instance=current_user)
+        if form.is_valid():
+            user = form.save()
+            messages.success(request, 'You successfully updated your profile')
+            return redirect('core:index')
+        return render(request, self.template_name, {'form': form})
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
