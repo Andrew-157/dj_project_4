@@ -1,5 +1,6 @@
 from django.contrib import messages
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.forms import Form
 from django.shortcuts import render, redirect
@@ -95,3 +96,10 @@ class LoginWithEmailView(View):
                 return redirect('core:index')
         return render(request, self.template_name, {'form': form,
                                                     'email': True})
+
+
+@login_required
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'You have successfully logged out')
+    return redirect('core:index')

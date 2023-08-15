@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 from pathlib import Path
 from django.contrib.messages import constants as messages
+from django.urls import reverse_lazy
 import environ
 
 env = environ.Env()
@@ -161,3 +162,5 @@ INTERNAL_IPS = [
     "127.0.0.1",
     # ...
 ]
+
+LOGIN_URL = reverse_lazy('users:become-user')
