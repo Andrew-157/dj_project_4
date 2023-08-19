@@ -26,9 +26,9 @@ class RegistrationStep1Form(forms.ModelForm):
 class RegistrationStep2Form(forms.Form):
 
     first_name = forms.CharField(max_length=255, required=False, min_length=3,
-                                 help_text='Optional.', label='First Name*')
+                                 help_text='Optional.')
     last_name = forms.CharField(max_length=255, required=False, min_length=3,
-                                help_text='Optional.', label='Last Name*')
+                                help_text='Optional.')
 
     class Meta:
         model = CustomUser
@@ -37,8 +37,7 @@ class RegistrationStep2Form(forms.Form):
 
 class RegistrationStep3Form(forms.Form):
     position = forms.CharField(max_length=255,  required=False, min_length=3,
-                               help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.',
-                               label='Position*')
+                               help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.')
 
 
 class RegistrationStep4Form(UserCreationForm):
@@ -71,10 +70,16 @@ class LoginWithEmailForm(AuthenticationForm):
 
 class UserChangeForm(BaseUserChangeForm):
     password = None
+    position = forms.CharField(max_length=255, min_length=3, required=False,
+                               help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.')
+    first_name = forms.CharField(max_length=255, required=False, min_length=3,
+                                 help_text='Optional.')
+    last_name = forms.CharField(max_length=255, required=False, min_length=3,
+                                help_text='Optional.')
 
     class Meta:
         model = CustomUser
-        fields = ['username', 'email', 'position']
+        fields = ['username', 'email', 'first_name', 'last_name', 'position']
 
     def clean(self):
         cleaned_data = super().clean()
@@ -82,8 +87,7 @@ class UserChangeForm(BaseUserChangeForm):
 
         if username and len(username) < 5:
             msg = 'Username cannot be shorter than 5 characters.'
-            
+
             self.add_error('username', msg)
 
         return self.cleaned_data
-
