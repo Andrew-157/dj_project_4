@@ -7,7 +7,8 @@ app_name = 'users'
 
 
 urlpatterns = [
-    path('register/', views.RegistrationWizard.as_view(), name='register'),
+    path('register/', views.RegistrationWizard.as_view(
+        views.REGISTRATION_WIZARD_FORMS), name='register'),
     path('login/username/', views.LoginWithUsernameView.as_view(),
          name='login-username'),
     path('login/email', views.LoginWithEmailView.as_view(), name='login-email'),

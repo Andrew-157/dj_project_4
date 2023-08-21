@@ -15,6 +15,14 @@ from users.forms import RegistrationStep1Form, RegistrationStep2Form, Registrati
     RegistrationStep4Form, LoginWithEmailForm, UserChangeForm
 
 
+REGISTRATION_WIZARD_FORMS = [
+    ('First Step', RegistrationStep1Form),
+    ('Second Step', RegistrationStep2Form),
+    ('Third Step', RegistrationStep3Form),
+    ('Fourth Step', RegistrationStep4Form)
+]
+
+
 def process_form_data(form_list: list[Form]) -> CustomUser:
     form_step_1 = form_list[0]
     form_step_2 = form_list[1]

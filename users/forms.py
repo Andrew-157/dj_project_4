@@ -1,3 +1,4 @@
+from typing import Any
 from django import forms
 from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm, \
@@ -15,29 +16,47 @@ class RegistrationStep1Form(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
 
-        if username and len(username) < 5:
+        if len(username) < 5:
             msg = 'Username cannot be shorter than 5 characters.'
             self.add_error('username', msg)
+
+        if CustomUser.objects.filter(email=email).first():
+            msg = 'A user with this email already exists.'
+            self.add_error('email', msg)
 
         return self.cleaned_data
 
 
 class RegistrationStep2Form(forms.Form):
 
-    first_name = forms.CharField(max_length=255, required=False, min_length=3,
+    first_name = forms.CharField(max_length=255, required=False,
                                  help_text='Optional.')
-    last_name = forms.CharField(max_length=255, required=False, min_length=3,
+    last_name = forms.CharField(max_length=255, required=False,
                                 help_text='Optional.')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        first_name = cleaned_data.get('first_name')
+        last_name = cleaned_data.get('last_name')
+
+        if first_name and len(first_name) < 3:
+            msg = 'First Name cannot be shorter than 3 characters.'
+            self.add_error('first_name', msg)
+
+        if last_name and len(last_name) < 3:
+            msg = 'Last Name cannot be shorter than 3 characters.'
+            self.add_error('last_name', msg)
+
+        return self.cleaned_data
+
+
+class RegistrationStep3Form(forms.ModelForm):
 
     class Meta:
         model = CustomUser
-        fields = ['first_name', 'last_name']
-
-
-class RegistrationStep3Form(forms.Form):
-    position = forms.CharField(max_length=255,  required=False, min_length=3,
-                               help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.')
+        fields = ['position']
 
 
 class RegistrationStep4Form(UserCreationForm):
@@ -69,6 +88,11 @@ class LoginWithEmailForm(AuthenticationForm):
 
 
 class UserChangeForm(BaseUserChangeForm):
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.user = kwargs['instance']
+
     password = None
     position = forms.CharField(max_length=255, min_length=3, required=False,
                                help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.')
@@ -84,10 +108,15 @@ class UserChangeForm(BaseUserChangeForm):
     def clean(self):
         cleaned_data = super().clean()
         username = cleaned_data.get('username')
+        email = cleaned_data.get('email')
 
-        if username and len(username) < 5:
+        if len(username) < 5:
             msg = 'Username cannot be shorter than 5 characters.'
-
             self.add_error('username', msg)
+
+        user_with_email = CustomUser.objects.filter(email=email).first()
+        if user_with_email and (user_with_email != self.user):
+            msg = 'A user with this email already exists.'
+            self.add_error('email', msg)
 
         return self.cleaned_data
