@@ -288,3 +288,11 @@ class LoginWithEmailViewTest(TestCase):
         user = auth.get_user(self.client)
         self.assertTrue(user.is_authenticated)
         self.assertEqual(user.email, 'new_user@gmail.com')
+
+
+class BecomeUserViewTest(TestCase):
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('users:become-user'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/become_user.html')
