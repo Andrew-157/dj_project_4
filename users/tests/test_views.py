@@ -1,6 +1,7 @@
 from django.contrib import auth
 from django.contrib.messages import get_messages
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
 from django.test import TestCase
 
@@ -220,8 +221,8 @@ class LoginWithUsernameViewTest(TestCase):
         response = self.client.get(reverse('users:login-username'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue('form' in response.context)
-        self.assertEqual(response.context['form'].__class__,
-                         AuthenticationForm)
+        self.assertTrue(isinstance(
+            response.context['form'], AuthenticationForm))
         self.assertTrue('username' in response.context)
 
     def test_correct_response_if_login_failed(self):
@@ -262,8 +263,8 @@ class LoginWithEmailViewTest(TestCase):
         response = self.client.get(reverse('users:login-email'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue('form' in response.context)
-        self.assertEqual(
-            response.context['form'].__class__, LoginWithEmailForm)
+        self.assertTrue(isinstance(
+            response.context['form'], LoginWithEmailForm))
         self.assertTrue('email' in response.context)
 
     def test_correct_response_if_login_failed(self):
@@ -296,3 +297,28 @@ class BecomeUserViewTest(TestCase):
         response = self.client.get(reverse('users:become-user'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'users/become_user.html')
+
+
+class LogoutViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        CustomUser.objects.create_user(
+            username='new_user',
+            email='new_user@gmail.com',
+            password='34somepassword34'
+        )
+
+    def test_correct_response_to_not_logged_user(self):
+        response = self.client.get(reverse('users:logout'))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith('/authenticate/'))
+
+    def test_correct_response_to_logged_user(self):
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.get(reverse('users:logout'))
+        self.assertEqual(response.status_code, 302)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]), 'You have successfully logged out')
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
