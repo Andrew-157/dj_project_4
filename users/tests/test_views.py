@@ -194,6 +194,9 @@ class RegisterViewTest(TestCase):
         self.assertEqual(str(messages[0]), 'You successfully registered.')
         new_user = CustomUser.objects.filter(username='new_user').first()
         self.assertTrue(new_user is not None)
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+        self.assertEqual(user, new_user)
 
 
 class LoginTemplateViewTest(TestCase):
