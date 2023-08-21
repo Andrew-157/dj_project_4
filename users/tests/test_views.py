@@ -195,6 +195,14 @@ class RegisterViewTest(TestCase):
         self.assertTrue(new_user is not None)
 
 
+class LoginTemplateViewTest(TestCase):
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('users:login'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/login_links.html')
+
+
 class LoginWithUsernameViewTest(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
