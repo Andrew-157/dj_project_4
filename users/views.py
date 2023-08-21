@@ -33,7 +33,6 @@ def process_form_data(form_list: list[Form]) -> CustomUser:
     first_name = form_step_2.cleaned_data['first_name']
     last_name = form_step_2.cleaned_data['last_name']
     position = form_step_3.cleaned_data['position']
-    position = position if position else None
     password = form_step_4.cleaned_data['password1']
 
     new_user = CustomUser.objects.create_user(

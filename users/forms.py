@@ -18,7 +18,7 @@ class RegistrationStep1Form(forms.ModelForm):
         username = cleaned_data.get('username')
         email = cleaned_data.get('email')
 
-        if len(username) < 5:
+        if username and len(username) < 5:
             msg = 'Username cannot be shorter than 5 characters.'
             self.add_error('username', msg)
 
@@ -110,7 +110,7 @@ class UserChangeForm(BaseUserChangeForm):
         username = cleaned_data.get('username')
         email = cleaned_data.get('email')
 
-        if len(username) < 5:
+        if username and len(username) < 5:
             msg = 'Username cannot be shorter than 5 characters.'
             self.add_error('username', msg)
 

@@ -6,7 +6,7 @@ from django.urls import reverse
 from django.test import TestCase
 
 from users.models import CustomUser
-from users.forms import LoginWithEmailForm
+from users.forms import LoginWithEmailForm, UserChangeForm
 
 
 class RegisterViewTest(TestCase):
@@ -45,6 +45,18 @@ class RegisterViewTest(TestCase):
                          ['management_form']['current_step'].value(), 'First Step')
         email_error_message = b'Enter a valid email address.'
         self.assertTrue(email_error_message in response.content)
+
+    def test_register_with_empty_data_first_step(self):
+        response = self.client.post(reverse('users:register'),
+                                    data={'registration_wizard-current_step': 'First Step'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['wizard']
+                         ['management_form']['current_step'].value(), 'First Step')
+        error_message = b'This field is required.'.decode()
+        self.assertTrue(
+            error_message.encode(encoding="utf-8") in response.content)
+        decoded_content: str = response.content.decode(encoding="utf-8")
+        self.assertEqual(decoded_content.count(error_message), 2)
 
     def test_register_with_not_unique_email_first_step(self):
         email = 'random@gmail.com'
@@ -170,6 +182,31 @@ class RegisterViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['wizard']['management_form']['current_step'].value(),
                          'Fourth Step')
+
+    def test_register_with_empty_data_fourth_step(self):
+        self.client.post(reverse('users:register'),
+                         data={'registration_wizard-current_step': 'First Step',
+                               'First Step-username': 'new_user',
+                               'First Step-email': 'new_user@gmail.com'})
+        self.client.post(reverse('users:register'),
+                         data={'registration_wizard-current_step': 'Second Step',
+                               'Second Step-first_name': 'John',
+                               'Second Step-last_name': 'Doe'})
+        self.client.post(reverse('users:register'),
+                         data={'registration_wizard-current_step': 'Third Step',
+                               'Third Step-position': 'Computer Science Student'})
+
+        response = self.client.post(reverse('users:register'),
+                                    data={'registration_wizard-current_step': 'Fourth Step'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['wizard']['management_form']['current_step'].value(),
+                         'Fourth Step')
+
+        error_message = 'This field is required.'
+        self.assertTrue(
+            error_message.encode(encoding="utf-8") in response.content)
+        decoded_content: str = response.content.decode(encoding="utf-8")
+        self.assertEqual(decoded_content.count(error_message), 2)
 
     def test_successful_registration(self):
         self.client.post(reverse('users:register'),
@@ -325,3 +362,122 @@ class LogoutViewTest(TestCase):
         self.assertEqual(str(messages[0]), 'You have successfully logged out')
         user = auth.get_user(self.client)
         self.assertFalse(user.is_authenticated)
+
+
+class ChangeUserViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        CustomUser.objects.create_user(
+            username='new_user',
+            email='new_user@gmail.com',
+            password='34somepassword34')
+
+    def test_correct_response_for_not_logged_user(self):
+        response = self.client.get(reverse('users:change-user'))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(response.url.startswith('/authenticate/'))
+
+    def test_view_uses_correct_template(self):
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.get(reverse('users:change-user'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('form' in response.context)
+        self.assertTrue(isinstance(response.context['form'], UserChangeForm))
+
+    def test_correct_response_if_invalid_data_posted(self):
+        test_user = CustomUser.objects.filter(username='new_user').first()
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.post(reverse('users:change-user'),
+                                    data={'username': 'shor',
+                                          'position': 'df',
+                                          'first_name': 'df',
+                                          'last_name': 'fg'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/change_user.html')
+        error_messages = [
+            'Username cannot be shorter than 5 characters.',
+            'Ensure this value has at least 3 characters (it has 2).'
+        ]
+        for error_message in error_messages:
+            self.assertTrue(error_message.encode(
+                encoding="utf-8") in response.content)
+
+    def test_correct_response_if_duplicate_username_posted(self):
+        username = 'test_user'
+        CustomUser.objects.create_user(
+            username=username,
+            email='test_user@gmail.com',
+            password='34somepassword34',
+        )
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.post(
+            reverse('users:change-user'),
+            data={'username': username,
+                  'email': 'new_user@gmail.com'}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/change_user.html')
+        error_message = b'A user with that username already exists.'
+        self.assertTrue(error_message in response.content)
+
+    def test_correct_response_if_duplicate_email_posted(self):
+        email = 'test_user@gmail.com'
+        CustomUser.objects.create_user(
+            username='test_user',
+            email=email,
+            password='34somepassword34',
+        )
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.post(
+            reverse('users:change-user'),
+            data={'username': 'new_user',
+                  'email': email}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/change_user.html')
+        error_message = b'A user with this email already exists.'
+        self.assertTrue(error_message in response.content)
+
+    def test_correct_response_if_empty_data_posted(self):
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.post(reverse('users:change-user'),
+                                    data={})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/change_user.html')
+        error_message = 'This field is required.'
+        self.assertTrue(error_message.encode() in response.content)
+        decoded_content: str = response.content.decode()
+        self.assertEqual(decoded_content.count(error_message), 2)
+
+    def test_correct_response_if_no_data_posted(self):
+        login = self.client.login(username='new_user',
+                                  password='34somepassword34')
+        response = self.client.post(reverse('users:change-user'),
+                                    data=None)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/change_user.html')
+        error_message = 'This field is required.'
+        self.assertTrue(error_message.encode() in response.content)
+        decoded_content: str = response.content.decode()
+        self.assertEqual(decoded_content.count(error_message), 2)
+
+    def test_successful_profile_update(self):
+        user = CustomUser.objects.filter(username='new_user').first()
+        login = self.client.login(username=user.username,
+                                  password='34somepassword34')
+        new_username = 'new_user1'
+        response = self.client.post(reverse('users:change-user'),
+                                    data={'username': new_username,
+                                          'email': user.email})
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('core:index'))
+        self.assertEqual(str(messages[0]),
+                         'You successfully updated your profile')
+        user = auth.get_user(self.client)
+        self.assertEqual(user.username, new_username)
