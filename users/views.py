@@ -102,7 +102,7 @@ class LoginWithEmailView(View):
             user = authenticate(username=email, password=password)
             if user:
                 login(request, user)
-                messages.success(request, 'Welcome back')
+                messages.success(request, 'Welcome Back')
                 return redirect('core:index')
         return render(request, self.template_name, {'form': form,
                                                     'email': True})

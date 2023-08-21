@@ -1,9 +1,11 @@
+from django.contrib import auth
 from django.contrib.messages import get_messages
+from django.contrib.auth.forms import AuthenticationForm
 from django.urls import reverse
 from django.test import TestCase
 
 from users.models import CustomUser
-from users.forms import RegistrationStep1Form, RegistrationStep2Form, RegistrationStep3Form
+from users.forms import LoginWithEmailForm
 
 
 class RegisterViewTest(TestCase):
@@ -191,3 +193,90 @@ class RegisterViewTest(TestCase):
         self.assertEqual(str(messages[0]), 'You successfully registered.')
         new_user = CustomUser.objects.filter(username='new_user').first()
         self.assertTrue(new_user is not None)
+
+
+class LoginWithUsernameViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        CustomUser.objects.create_user(
+            username='new_user',
+            email='new_user@gmail.com',
+            password='34somepassword34')
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('users:login-username'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/login.html')
+
+    def test_correct_objects_in_context(self):
+        response = self.client.get(reverse('users:login-username'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('form' in response.context)
+        self.assertEqual(response.context['form'].__class__,
+                         AuthenticationForm)
+        self.assertTrue('username' in response.context)
+
+    def test_correct_response_if_login_failed(self):
+        response = self.client.post(reverse('users:login-username'),
+                                    data={'username': 'new_user',
+                                          'password': 'wrongpassword34'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/login.html')
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
+    def test_successful_login(self):
+        response = self.client.post(reverse('users:login-username'),
+                                    data={'username': 'new_user',
+                                          'password': '34somepassword34'})
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('core:index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]), "Welcome Back")
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+        self.assertEqual(user.username, 'new_user')
+
+
+class LoginWithEmailViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        CustomUser.objects.create_user(username='new_user',
+                                       email='new_user@gmail.com',
+                                       password='34somepassword34')
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('users:login-email'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/login.html')
+
+    def test_correct_objects_in_context(self):
+        response = self.client.get(reverse('users:login-email'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('form' in response.context)
+        self.assertEqual(
+            response.context['form'].__class__, LoginWithEmailForm)
+        self.assertTrue('email' in response.context)
+
+    def test_correct_response_if_login_failed(self):
+        response = self.client.post(reverse('users:login-email'),
+                                    data={'username': 'new_user@gamil.com',
+                                          'password': 'dfghjkccfghg'})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/login.html')
+        error_message = b"Please enter a correct email and password. Note that both fields may be case-sensitive."
+        self.assertTrue(error_message in response.content)
+        user = auth.get_user(self.client)
+        self.assertFalse(user.is_authenticated)
+
+    def test_successful_login(self):
+        response = self.client.post(reverse('users:login-email'),
+                                    data={'username': 'new_user@gmail.com',
+                                          'password': '34somepassword34'})
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, reverse('core:index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(str(messages[0]), "Welcome Back")
+        user = auth.get_user(self.client)
+        self.assertTrue(user.is_authenticated)
+        self.assertEqual(user.email, 'new_user@gmail.com')
