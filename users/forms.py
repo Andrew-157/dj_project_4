@@ -94,8 +94,8 @@ class UserChangeForm(BaseUserChangeForm):
         self.user = kwargs['instance']
 
     password = None
-    position = forms.CharField(max_length=255, min_length=3, required=False,
-                               help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.')
+    # position = forms.CharField(max_length=255, min_length=3, required=False,
+    #                            help_text='Optional. For example: Computer Science Student, Arts Teacher, Rocket Engineer.')
     first_name = forms.CharField(max_length=255, required=False, min_length=3,
                                  help_text='Optional.')
     last_name = forms.CharField(max_length=255, required=False, min_length=3,
