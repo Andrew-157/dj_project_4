@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center">Publish your article</h1>
+    {% load crispy_forms_tags %}
+    <div class="container py-5">
+        <form action="{% url 'private:post-article' %}" method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit" class="btn btn-primary">Publish</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
