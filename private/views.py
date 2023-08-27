@@ -5,10 +5,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
 from django.urls import converters
 from django.http import HttpResponseForbidden
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.views import View
 from django.views.generic import FormView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
@@ -43,9 +43,11 @@ class PostArticleView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form) -> HttpResponse:
         form.instance.author = self.request.user
+        self.object = form.save()
         messages.success(
             self.request, 'Great! You posted new article. Now add some sections to it.')
-        return super().form_valid(form)
+        return HttpResponseRedirect(reverse('private:article-detail',
+                                            kwargs={'id': self.object.id}))
 
 
 class ArticleDetailView(LoginRequiredMixin, DetailView):
