@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="text-center">
+        <h1>This is short guide how to post articles on
+            <a class="text-decoration-none" href="{% url 'core:index' %}">Studilee</a>
+        </h1>
+        <p>
+            Firstly, you publish articles's title, then you can proceed to publishing different sections.
+            After you have finished all sections, set article as 'Ready to Go' so that others will be able
+            to see it.
+        </p>
+    </div>
+</div>
+{% endblock %}

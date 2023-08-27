@@ -1,4 +1,5 @@
 from django.urls import path, register_converter
+from django.views.generic import TemplateView
 
 from private import views
 from private.views import UUIDConverter
@@ -21,5 +22,6 @@ urlpatterns = [
     path('you/articles/<uuid:id>/sections/publish/', views.PostSectionView.as_view(),
          name='post-section'),
     path('you/articles/<uuid:id>/sections/<str:slug>/', views.SectionDetail.as_view(),
-         name='section-detail')
+         name='section-detail'),
+    path('guide/', TemplateView.as_view(template_name='private/guide.html'), name='guide')
 ]
