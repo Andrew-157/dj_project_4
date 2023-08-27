@@ -41,10 +41,12 @@ class Section(models.Model):
     title = models.CharField(max_length=255,
                              validators=[MinLengthValidator(5)],
                              null=False)
+    content = models.TextField()
     slug = models.CharField(max_length=300,
                             null=False)
     article = models.ForeignKey(
         'core.Article', on_delete=models.CASCADE, related_name='sections')
+
     published = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
