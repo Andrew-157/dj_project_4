@@ -27,6 +27,8 @@ class Article(models.Model):
                              null=False)
     author = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
     category = models.ForeignKey('core.Category', on_delete=models.CASCADE)
+    published = models.DateTimeField(auto_now_add=True, null=True)
+    updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.id + ' ' + self.title

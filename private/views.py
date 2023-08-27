@@ -1,16 +1,26 @@
+from typing import Any, Optional
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.db import models
+from django.urls import converters
+from django.http import HttpResponseForbidden
+from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from django.urls import reverse_lazy
 from django.views import View
-from django.views.generic import FormView
+from django.views.generic import FormView, DetailView
 from django.views.generic.edit import CreateView, DeleteView
+from django.shortcuts import get_object_or_404
+from django.core.exceptions import PermissionDenied
 
 from private.forms import CreateArticleForm
 from core.models import Article
+
+
+class UUIDConverter(converters.StringConverter):
+    regex = '[0-9a-f-]+'
 
 
 class PrivatePageView(View):
@@ -27,7 +37,8 @@ class PrivatePageView(View):
 class PostArticleView(LoginRequiredMixin, CreateView):
     template_name = 'private/publish_article.html'
     form_class = CreateArticleForm
-    success_url = reverse_lazy('private:private-page')
+    success_url = reverse_lazy('private:article-detail',
+                               )
     model = Article
 
     def form_valid(self, form) -> HttpResponse:
@@ -35,3 +46,18 @@ class PostArticleView(LoginRequiredMixin, CreateView):
         messages.success(
             self.request, 'Great! You posted new article. Now add some sections to it.')
         return super().form_valid(form)
+
+
+class ArticleDetailView(LoginRequiredMixin, DetailView):
+    queryset = Article.objects.select_related('author', 'category').all()
+    template_name = 'private/article_detail.html'
+    context_object_name = 'article'
+
+    def get_object(self):
+        return get_object_or_404(Article, id=self.kwargs['id'])
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        object: Article = self.get_object()
+        if object.author != request.user:
+            raise PermissionDenied
+        return super().get(request, *args, **kwargs)
