@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db import models
 from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.forms.models import BaseModelForm
@@ -16,9 +17,10 @@ from django.views.generic import FormView, DetailView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
+from django.forms import Form
 
-from private.forms import CreateArticleForm
-from core.models import Article
+from private.forms import CreateUpdateArticleForm, CreateUpdateSectionForm
+from core.models import Article, Section
 
 
 class UUIDConverter(converters.StringConverter):
@@ -38,7 +40,7 @@ class PrivatePageView(View):
 
 class PostArticleView(LoginRequiredMixin, CreateView):
     template_name = 'private/publish_article.html'
-    form_class = CreateArticleForm
+    form_class = CreateUpdateArticleForm
     model = Article
 
     def form_valid(self, form) -> HttpResponse:
@@ -73,7 +75,7 @@ class ArticleDetailView(LoginRequiredMixin, DetailView):
 
 class UpdateArticleView(LoginRequiredMixin, UpdateView):
     template_name = 'private/update_article.html'
-    form_class = CreateArticleForm
+    form_class = CreateUpdateArticleForm
 
     def get_object(self):
         article = get_object_or_404(Article, id=self.kwargs['id'])
@@ -121,3 +123,74 @@ class ArticleListView(LoginRequiredMixin, ListView):
             filter(author=self.request.user).\
             select_related('category').all().\
             annotate(sections_number=Count('sections'))
+
+
+class PostSectionView(LoginRequiredMixin, View):
+    template_name = 'private/post_section.html'
+    form_class = CreateUpdateSectionForm
+
+    def get_article(self, id):
+        article = Article.objects.filter(id=id).first()
+        # return get_object_or_404(Article, id=id)
+        if not article:
+            raise Http404
+        return article
+
+    def add_error_if_section_number_is_not_unique(self, form_data, article, form: Form):
+        numbers_of_sections = [
+            section.number for section in article.sections.all()]
+        section_number = int(form_data['number'][0])
+        if section_number in numbers_of_sections:
+            form.add_error(
+                'number', f'Article already has section with number {section_number}.')
+
+    def get(self, request, *args, **kwargs):
+        article = self.get_article(kwargs['id'])
+        if article.author != self.request.user:
+            raise PermissionDenied
+        form = self.form_class()
+        context = {'form': form,
+                   'article': article}
+        return render(request, self.template_name, context=context)
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        article = self.get_article(kwargs['id'])
+        if article.author != request.user:
+            raise PermissionDenied
+        form = self.form_class(request.POST)
+        self.add_error_if_section_number_is_not_unique(form_data=request.POST,
+                                                       article=article,
+                                                       form=form)
+        if form.is_valid():
+            form.instance.article = article
+            form.save()
+            messages.success(
+                request, 'You successfully added new section to your article!')
+            return HttpResponseRedirect(reverse('private:article-detail', kwargs={'id': article.id}))
+        context = {'form': form,
+                   'article': article}
+        return render(request, self.template_name, context=context)
+
+
+class SectionDetail(LoginRequiredMixin, DetailView):
+    template_name = 'private/section_detail.html'
+    context_object_name = 'section'
+
+    def get_object(self):
+        article_id = self.kwargs['id']
+        section_slug = self.kwargs['slug']
+        article = Article.objects.filter(id=article_id).first()
+        if not article:
+            raise Http404
+        if article.author != self.request.user:
+            raise PermissionDenied
+        sections: list[Section] = article.sections.all()
+        sections_slugs = [section.slug for section in sections]
+        if section_slug not in sections_slugs:
+            raise Http404
+        self.article = article
+
+    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        context['article'] = self.article
+        return context

@@ -4,11 +4,15 @@
 <div class="container py-5">
     <div class="text-center">
         <h1>{{ article.title }}</h1>
+        <a href="{% url 'private:post-section' id=article.id %}">Post Section</a>
         <a class="btn btn-primary" href="{% url 'private:update-article' id=article.id  %}">Update article</a>
         <form action="{% url 'private:delete-article' id=article.id %}" method="post">
             {% csrf_token %}
             <button class="btn btn-danger" type="submit">Delete</button>
         </form>
+        {% for section in article.sections.all %}
+        <a href="{% url 'private:section-detail' id=article.id slug=section.slug %}">{{ section.title }}</a>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

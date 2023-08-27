@@ -1,0 +1,10 @@
+{% extends 'core/base.html' %}
+
+
+{% block content %}
+<div class="container py-5">
+    <p>Section number {{ section.number }} of
+        <a href="{% url 'private:article-detail' id=article.id %}">{{ article.title}}</a>
+    </p>
+</div>
+{% endblock %}

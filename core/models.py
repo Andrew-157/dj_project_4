@@ -1,7 +1,7 @@
 from typing import Iterable, Optional
 import uuid
 from django.db import models
-from django.core.validators import MinLengthValidator
+from django.core.validators import MinLengthValidator, MinValueValidator
 from django.template.defaultfilters import slugify
 
 from users.models import CustomUser
@@ -41,6 +41,8 @@ class Section(models.Model):
     title = models.CharField(max_length=255,
                              validators=[MinLengthValidator(5)],
                              null=False)
+    number = models.SmallIntegerField(
+        validators=[MinValueValidator(1)], default=1, null=False)
     content = models.TextField()
     slug = models.CharField(max_length=300,
                             null=False)
@@ -56,3 +58,6 @@ class Section(models.Model):
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        unique_together = ('article', 'number')
