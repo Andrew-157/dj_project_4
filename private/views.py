@@ -6,13 +6,13 @@ from django.db import models
 from django.forms.models import BaseModelForm
 from django.urls import converters
 from django.http import HttpResponseForbidden
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import View
 from django.views.generic import FormView, DetailView
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
 
@@ -50,14 +50,18 @@ class PostArticleView(LoginRequiredMixin, CreateView):
 
 
 class ArticleDetailView(LoginRequiredMixin, DetailView):
-    queryset = Article.objects.select_related('author', 'category').all()
     template_name = 'private/article_detail.html'
     context_object_name = 'article'
 
     def get_object(self):
         # Getting object like this is necessary because default implementation
         # does not understand uuid as id
-        return get_object_or_404(Article, id=self.kwargs['id'])
+        article = Article.objects.\
+            select_related('author', 'category').filter(
+                id=self.kwargs['id']).first()
+        if not article:
+            raise Http404
+        return article
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         object: Article = self.get_object()
@@ -69,7 +73,6 @@ class ArticleDetailView(LoginRequiredMixin, DetailView):
 class UpdateArticleView(LoginRequiredMixin, UpdateView):
     template_name = 'private/update_article.html'
     form_class = CreateArticleForm
-    model = Article
 
     def get_object(self):
         article = get_object_or_404(Article, id=self.kwargs['id'])
@@ -88,3 +91,21 @@ class UpdateArticleView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['article'] = self.object
         return context
+
+
+class DeleteArticleView(LoginRequiredMixin, DeleteView):
+    success_url = reverse_lazy('private:private-page')
+
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        messages.success(request, 'You successfully deleted your article!')
+        return super().post(request, *args, **kwargs)
+
+    def get_object(self):
+        article = Article.objects.\
+            select_related('author', 'category').filter(
+                id=self.kwargs['id']).first()
+        if not article:
+            raise Http404
+        if article.author != self.request.user:
+            raise PermissionDenied
+        return article

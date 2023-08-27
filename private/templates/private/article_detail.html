@@ -5,6 +5,10 @@
     <div class="text-center">
         <h1>{{ article.title }}</h1>
         <a class="btn btn-primary" href="{% url 'private:update-article' id=article.id  %}">Update article</a>
+        <form action="{% url 'private:delete-article' id=article.id %}" method="post">
+            {% csrf_token %}
+            <button class="btn btn-danger" type="submit">Delete</button>
+        </form>
     </div>
 </div>
 {% endblock %}

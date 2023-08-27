@@ -28,12 +28,13 @@ class Article(models.Model):
                              validators=[MinLengthValidator(5)],
                              null=False)
     author = models.ForeignKey('users.CustomUser', on_delete=models.CASCADE)
-    category = models.ForeignKey('core.Category', on_delete=models.CASCADE)
+    category = models.ForeignKey(
+        'core.Category', on_delete=models.PROTECT, related_name='articles')
     published = models.DateTimeField(auto_now_add=True, null=True)
     updated = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.id + ' ' + self.title
+        return str(self.id) + ' ' + self.title
 
 
 class Section(models.Model):

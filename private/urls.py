@@ -14,5 +14,7 @@ urlpatterns = [
     path('you/articles/<uuid:id>/',
          views.ArticleDetailView.as_view(), name='article-detail'),
     path('you/articles/<uuid:id>/update/',
-         views.UpdateArticleView.as_view(), name='update-article')
+         views.UpdateArticleView.as_view(), name='update-article'),
+    path('you/article/<uuid:id>/delete/',
+         views.DeleteArticleView.as_view(), name='delete-article')
 ]
