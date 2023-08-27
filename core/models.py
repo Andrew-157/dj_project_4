@@ -32,6 +32,7 @@ class Article(models.Model):
         'core.Category', on_delete=models.PROTECT, related_name='articles')
     published = models.DateTimeField(auto_now_add=True, null=True)
     updated = models.DateTimeField(auto_now=True)
+    is_ready = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.id) + ' ' + self.title
