@@ -6,10 +6,32 @@
         <h1>{{ article.title }}</h1>
         <a href="{% url 'private:post-section' id=article.id %}">Post Section</a>
         <a class="btn btn-primary" href="{% url 'private:update-article' id=article.id  %}">Update article</a>
-        <form action="{% url 'private:delete-article' id=article.id %}" method="post">
-            {% csrf_token %}
-            <button class="btn btn-danger" type="submit">Delete</button>
-        </form>
+
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#myModal">
+            Delete Article
+        </button>
+        <div class="modal" id="myModal">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Are you sure?</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="btn-group">
+                            <form action="{% url 'private:delete-article' id=article.id %}" method="post">
+                                {% csrf_token %}
+                                <button class="btn btn-danger" type="submit">Yes</button>
+                            </form>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {% for section in article.sections.all %}
         <a href="{% url 'private:section-detail' id=article.id slug=section.slug %}">{{ section.title }}</a>
         {% endfor %}
