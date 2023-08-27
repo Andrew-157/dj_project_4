@@ -2,7 +2,8 @@ from typing import Any, Dict, Optional
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models
+from django.db.models import Count
+from django.db.models.query import QuerySet
 from django.forms.models import BaseModelForm
 from django.urls import converters
 from django.http import HttpResponseForbidden
@@ -11,7 +12,7 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import View
-from django.views.generic import FormView, DetailView
+from django.views.generic import FormView, DetailView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import PermissionDenied
@@ -109,3 +110,14 @@ class DeleteArticleView(LoginRequiredMixin, DeleteView):
         if article.author != self.request.user:
             raise PermissionDenied
         return article
+
+
+class ArticleListView(LoginRequiredMixin, ListView):
+    template_name = 'private/article_list.html'
+    context_object_name = 'articles'
+
+    def get_queryset(self) -> QuerySet[Any]:
+        return Article.objects.\
+            filter(author=self.request.user).\
+            select_related('category').all().\
+            annotate(sections_number=Count('sections'))

@@ -1,0 +1,14 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1>Total number of your articles: {{ articles|length }} </h1>
+    {% for article in articles %}
+    <div class="container">
+        <p>Article title: {{ article.title }}</p>
+        <p>Sections number: {{ article.sections_number }}</p>
+        <a href="{% url 'private:article-detail' id=article.id %}">Visit article</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

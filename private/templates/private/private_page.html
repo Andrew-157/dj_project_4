@@ -5,5 +5,6 @@
 <div class="container py-5">
     <h1>Your private page, {{ user }}</h1>
     <a href="{% url 'private:post-article' %}">Post new article</a>
+    <a href="{% url 'private:article-list' %}">All your articles</a>
 </div>
 {% endblock %}
