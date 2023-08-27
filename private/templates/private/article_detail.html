@@ -4,6 +4,7 @@
 <div class="container py-5">
     <div class="text-center">
         <h1>{{ article.title }}</h1>
+        <a class="btn btn-primary" href="{% url 'private:update-article' id=article.id  %}">Update article</a>
     </div>
 </div>
 {% endblock %}
