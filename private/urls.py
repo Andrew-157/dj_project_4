@@ -23,5 +23,9 @@ urlpatterns = [
          name='post-section'),
     path('you/articles/<uuid:id>/sections/<str:slug>/', views.SectionDetail.as_view(),
          name='section-detail'),
-    path('guide/', TemplateView.as_view(template_name='private/guide.html'), name='guide')
+    path('guide/', TemplateView.as_view(template_name='private/guide.html'), name='guide'),
+    path('you/articles/<uuid:id>/sections/<str:slug>/update/article/',
+         views.UpdateSectionThroughArticleDetail.as_view(), name='update-section-article-detail'),
+    path('you/articles/<uuid:id>/sections/<str:slug>/update/section/',
+         views.UpdateSectionThroughSectionDetail.as_view(), name='update-section-section-detail')
 ]

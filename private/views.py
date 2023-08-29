@@ -1,21 +1,20 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Type
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db import models
+from django.db.models.query_utils import Q
 from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.forms.models import BaseModelForm
 from django.urls import converters
-from django.http import HttpResponseForbidden
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import View
-from django.views.generic import FormView, DetailView, ListView
+from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.forms import Form
 
@@ -84,16 +83,11 @@ class UpdateArticleView(LoginRequiredMixin, UpdateView):
         return article
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        self.object: Article = form.save()
+        object: Article = form.save()
         messages.success(
             self.request, 'You successfully updated your article!')
         return HttpResponseRedirect(reverse('private:article-detail',
-                                            kwargs={'id': self.object.id}))
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context['article'] = self.object
-        return context
+                                            kwargs={'id': object.id}))
 
 
 class DeleteArticleView(LoginRequiredMixin, DeleteView):
@@ -129,23 +123,26 @@ class PostSectionView(LoginRequiredMixin, View):
     template_name = 'private/post_section.html'
     form_class = CreateUpdateSectionForm
 
-    def get_article(self, id):
-        article = Article.objects.filter(id=id).first()
-        # return get_object_or_404(Article, id=id)
-        if not article:
-            raise Http404
-        return article
-
     def add_error_if_section_number_is_not_unique(self, form_data, article, form: Form):
+        sections: list[Section] = article.sections.all()
         numbers_of_sections = [
-            section.number for section in article.sections.all()]
+            section.number for section in sections]
         section_number = int(form_data['number'][0])
         if section_number in numbers_of_sections:
             form.add_error(
                 'number', f'Article already has section with number {section_number}.')
 
+    def add_error_if_not_unique_title_for_section(self, form_data, article, form: Form):
+        sections: list[Section] = article.sections.all()
+        titles_of_sections = [section.title for section in sections]
+        section_title = form_data['title']
+        if section_title in titles_of_sections:
+            form.add_error(
+                'title', f'Article already has section with this title.'
+            )
+
     def get(self, request, *args, **kwargs):
-        article = self.get_article(kwargs['id'])
+        article = get_object_or_404(Article, id=self.kwargs['id'])
         if article.author != self.request.user:
             raise PermissionDenied
         form = self.form_class()
@@ -154,11 +151,14 @@ class PostSectionView(LoginRequiredMixin, View):
         return render(request, self.template_name, context=context)
 
     def post(self, request: HttpRequest, *args, **kwargs):
-        article = self.get_article(kwargs['id'])
+        article = get_object_or_404(Article, id=self.kwargs['id'])
         if article.author != request.user:
             raise PermissionDenied
         form = self.form_class(request.POST)
         self.add_error_if_section_number_is_not_unique(form_data=request.POST,
+                                                       article=article,
+                                                       form=form)
+        self.add_error_if_not_unique_title_for_section(form_data=request.POST,
                                                        article=article,
                                                        form=form)
         if form.is_valid():
@@ -189,8 +189,193 @@ class SectionDetail(LoginRequiredMixin, DetailView):
         if section_slug not in sections_slugs:
             raise Http404
         self.article = article
+        section = Section.objects.filter(
+            Q(slug=section_slug) &
+            Q(article=article)
+        ).first()
+        return section
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context['article'] = self.article
         return context
+
+
+class UpdateSection(LoginRequiredMixin, View):
+    template_name = 'private/update_section.html'
+    form_class = CreateUpdateSectionForm
+    success_message = 'You successfully updated a section!'
+
+    def get_section(self, article: Article, slug: str):
+        return Section.objects.filter(
+            Q(article=article) &
+            Q(slug=slug)
+        ).first()
+
+    def add_error_if_not_unique_number_for_section(self, form_data, article: Article, form: Form, section: Section):
+        sections: list[Section] = article.sections.all()
+        numbers_of_sections = [
+            section.number for section in sections]
+        numbers_of_sections.remove(section.number)
+        section_number = int(form_data['number'][0])
+        if (section_number in numbers_of_sections):
+            form.add_error(
+                'number', f'Article already has section with number {section_number}.')
+
+    def add_error_if_not_unique_title_for_section(self, form_data, article: Article, form: Form, section: Section):
+        sections: list[Section] = article.sections.all()
+        titles_of_sections = [
+            section.title for section in sections]
+        titles_of_sections.remove(section.title)
+        section_title = form_data['title']
+        if (section_title in titles_of_sections):
+            form.add_error(
+                'title', f'Article already has section with this title.'
+            )
+
+    def get(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        current_user = self.request.user
+        if article.author != current_user:
+            raise PermissionDenied
+        section_slug = self.kwargs['slug']
+        sections: list[Section] = article.sections.all()
+        sections_slugs = [section.slug for section in sections]
+        if section_slug not in sections_slugs:
+            raise Http404
+        section = self.get_section(article=article, slug=self.kwargs['slug'])
+        form = self.form_class(instance=section)
+        context = {'article': article,
+                   'form': form,
+                   'section': section}
+        return render(request, self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        current_user = self.request.user
+        if article.author != current_user:
+            raise PermissionDenied
+        section_slug = self.kwargs['slug']
+        sections: list[Section] = article.sections.all()
+        sections_slugs = [section.slug for section in sections]
+        if section_slug not in sections_slugs:
+            raise Http404
+        section = self.get_section(article=article, slug=self.kwargs['slug'])
+        form = self.form_class(request.POST, instance=section)
+        self.add_error_if_not_unique_number_for_section(form_data=request.POST,
+                                                        article=article,
+                                                        form=form,
+                                                        section=section)
+        self.add_error_if_not_unique_title_for_section(form_data=request.POST,
+                                                       article=article,
+                                                       form=form,
+                                                       section=section)
+        if form.is_valid():
+            form.save()
+            messages.success(request, self.success_message)
+            return HttpResponseRedirect(reverse('private:section-detail',
+                                                kwargs={'id': article.id,
+                                                        'slug': section.slug}))
+        context = {'article': article,
+                   'form': form,
+                   'section': section}
+        return render(request, self.template_name, context=context)
+
+
+class UpdateSectionBase(LoginRequiredMixin, View):
+    redirect_to = ''
+    send_post_to = ''
+    template_name = 'private/update_section.html'
+    form_class = CreateUpdateSectionForm
+    success_message = 'You successfully updated a section!'
+
+    def get_section(self, article: Article, slug: str):
+        return Section.objects.filter(
+            Q(article=article) &
+            Q(slug=slug)
+        ).first()
+
+    def add_error_if_not_unique_number_for_section(self, form_data, article: Article, form: Form, section: Section):
+        sections: list[Section] = article.sections.all()
+        numbers_of_sections = [
+            section.number for section in sections]
+        numbers_of_sections.remove(section.number)
+        section_number = int(form_data['number'][0])
+        if (section_number in numbers_of_sections):
+            form.add_error(
+                'number', f'Article already has section with number {section_number}.')
+
+    def add_error_if_not_unique_title_for_section(self, form_data, article: Article, form: Form, section: Section):
+        sections: list[Section] = article.sections.all()
+        titles_of_sections = [
+            section.title for section in sections]
+        titles_of_sections.remove(section.title)
+        section_title = form_data['title']
+        if (section_title in titles_of_sections):
+            form.add_error(
+                'title', f'Article already has section with this title.'
+            )
+
+    def get(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        current_user = self.request.user
+        if article.author != current_user:
+            raise PermissionDenied
+        section_slug = self.kwargs['slug']
+        sections: list[Section] = article.sections.all()
+        sections_slugs = [section.slug for section in sections]
+        if section_slug not in sections_slugs:
+            raise Http404
+        section = self.get_section(article=article, slug=self.kwargs['slug'])
+        form = self.form_class(instance=section)
+        context = {'article': article,
+                   'form': form,
+                   'section': section,
+                   'send_post_to': self.send_post_to}
+        return render(request, self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        current_user = self.request.user
+        if article.author != current_user:
+            raise PermissionDenied
+        section_slug = self.kwargs['slug']
+        sections: list[Section] = article.sections.all()
+        sections_slugs = [section.slug for section in sections]
+        if section_slug not in sections_slugs:
+            raise Http404
+        section = self.get_section(article=article, slug=self.kwargs['slug'])
+        form = self.form_class(request.POST, instance=section)
+        self.add_error_if_not_unique_number_for_section(form_data=request.POST,
+                                                        article=article,
+                                                        form=form,
+                                                        section=section)
+        self.add_error_if_not_unique_title_for_section(form_data=request.POST,
+                                                       article=article,
+                                                       form=form,
+                                                       section=section)
+        if form.is_valid():
+            form.save()
+            messages.success(request, self.success_message)
+            if self.redirect_to == 'private:section-detail':
+                return HttpResponseRedirect(reverse('private:section-detail',
+                                                    kwargs={'id': article.id,
+                                                            'slug': section.slug}))
+            if self.redirect_to == 'private:article-detail':
+                return HttpResponseRedirect(reverse('private:article-detail',
+                                                    kwargs={'id': article.id}))
+        context = {'article': article,
+                   'form': form,
+                   'section': section,
+                   'send_post_to': self.send_post_to}
+        return render(request, self.template_name, context=context)
+
+
+class UpdateSectionThroughArticleDetail(UpdateSectionBase):
+    redirect_to = 'private:article-detail'
+    send_post_to = 'private:update-section-article-detail'
+
+
+class UpdateSectionThroughSectionDetail(UpdateSectionBase):
+    redirect_to = 'private:section-detail'
+    send_post_to = 'private:update-section-section-detail'

@@ -61,4 +61,7 @@ class Section(models.Model):
         return self.title
 
     class Meta:
-        unique_together = ('article', 'number')
+        unique_together = (
+            ('article', 'number'),
+            ('article', 'title')
+        )

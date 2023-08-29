@@ -1,5 +1,8 @@
-from typing import Any, Dict
+from typing import Any, Dict, Mapping, Optional, Type, Union
 from django import forms
+from django.core.files.base import File
+from django.db.models.base import Model
+from django.forms.utils import ErrorList
 
 from core.models import Article, Section
 
@@ -23,3 +26,10 @@ class CreateUpdateSectionForm(forms.ModelForm):
     class Meta:
         model = Section
         fields = ['title', 'number', 'content']
+
+
+class ArticleIsReadyForm(forms.ModelForm):
+
+    class Meta:
+        model = Article
+        fields = ['is_ready']

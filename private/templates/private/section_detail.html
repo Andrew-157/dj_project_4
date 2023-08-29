@@ -3,8 +3,11 @@
 
 {% block content %}
 <div class="container py-5">
+    {{ section }}
     <p>Section number {{ section.number }} of
         <a href="{% url 'private:article-detail' id=article.id %}">{{ article.title}}</a>
     </p>
+    <a class="text-decoration-none"
+        href="{% url 'private:update-section-section-detail' id=article.id slug=section.slug %}">Update</a>
 </div>
 {% endblock %}
