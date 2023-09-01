@@ -41,6 +41,10 @@
             {{ section.number}}
             <a href="{% url 'private:section-detail' id=article.id slug=section.slug %}">{{ section.title }}</a>
             <a href="{% url 'private:update-section-article-detail' id=article.id slug=section.slug %}">Update</a>
+            <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
+                {% csrf_token %}
+                <button class="btn btn-danger btn-sm">Delete</button>
+            </form>
         </div>
         {% endfor %}
     </div>

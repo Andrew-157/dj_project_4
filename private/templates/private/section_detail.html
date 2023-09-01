@@ -9,5 +9,9 @@
     </p>
     <a class="text-decoration-none"
         href="{% url 'private:update-section-section-detail' id=article.id slug=section.slug %}">Update</a>
+    <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
+        {% csrf_token%}
+        <button class="btn btn-danger btn-sm">Delete</button>
+    </form>
 </div>
 {% endblock %}
