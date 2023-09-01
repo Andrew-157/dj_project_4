@@ -92,7 +92,7 @@ class UpdateArticleView(LoginRequiredMixin, UpdateView):
 
 
 class DeleteArticleView(LoginRequiredMixin, DeleteView):
-    http_method_names = ['POST']
+    http_method_names = ['post']
     success_url = reverse_lazy('private:private-page')
 
     def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
