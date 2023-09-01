@@ -2,16 +2,77 @@
 
 
 {% block content %}
+<!-- <div class="container py-5">
+    <div class="text-center">
+        <h1><mark>{{ section.number }}. {{ section.title }}</mark><small>(Article:
+                <a href="{% url 'private:article-detail' id=article.id %}">{{ article.title}}</a>)</small></h1>
+        <h5>
+            {% if section.published == section.updated %}
+            <strong>Publication date:</strong> {{ section.published.date}}
+            {% else %}
+            <strong>Publication date:</strong> {{ section.published.date }}
+            <strong>Update date:</strong> {{ section.updated.date }}
+            {% endif %}
+        </h5>
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="{% url 'private:update-section-section-detail' id=article.id slug=section.slug %}"
+                    class="btn btn-primary">Update</a>
+            </div>
+            <div class="col-auto">
+                <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="container py-5 text-center">
+        <h3>Section Content:</h3>
+        <p class="text-break">
+            {{ section.content }}
+        </p>
+    </div>
+</div> -->
 <div class="container py-5">
-    {{ section }}
-    <p>Section number {{ section.number }} of
-        <a href="{% url 'private:article-detail' id=article.id %}">{{ article.title}}</a>
-    </p>
-    <a class="text-decoration-none"
-        href="{% url 'private:update-section-section-detail' id=article.id slug=section.slug %}">Update</a>
-    <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
-        {% csrf_token%}
-        <button class="btn btn-danger btn-sm">Delete</button>
-    </form>
+    <div class="text-center">
+        <h1>Section number: <strong>{{ section.number }}</strong>
+            of article:
+            <a href="{% url 'private:article-detail' id=article.id %}" class="text-decoration-none">
+                {{ article.title}}
+            </a>
+        </h1>
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <a href="{% url 'private:update-section-section-detail' id=article.id slug=section.slug %}"
+                    class="btn btn-primary">Update</a>
+            </div>
+            <div class="col-auto">
+                <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
+                    {% csrf_token %}
+                    <button class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+        <div class="container py-5">
+            <h5>
+                {% if section.published == section.updated %}
+                <strong>Publication date:</strong> {{ section.published.date}}
+                {% else %}
+                <strong>Publication date:</strong> {{ section.published.date }}
+                <strong>Update date:</strong> {{ section.updated.date }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="container py-2">
+            <h5><strong>Title:</strong> <mark>{{ section.title }}</mark></h5>
+        </div>
+        <div class="container py-3">
+            <h5><strong>Content:</strong></h5>
+            <p class="text-break">
+                {{ section.content }}
+            </p>
+        </div>
+    </div>
 </div>
 {% endblock %}
