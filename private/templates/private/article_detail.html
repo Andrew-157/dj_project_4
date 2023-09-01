@@ -49,14 +49,6 @@
                 <strong>Update date:</strong> {{ section.updated.date }}
                 {% endif %}
             </p>
-            <!-- <div class="">
-                <a href="{% url 'private:update-section-article-detail' id=article.id slug=section.slug %}"
-                    class="btn btn-primary btn-sm">Update</a>
-                <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
-                    {% csrf_token %}
-                    <button class="btn btn-danger btn-sm">Delete</button>
-                </form>
-            </div> -->
             <div class="row justify-content-center">
                 <div class="col-auto">
                     <a href="{% url 'private:update-section-article-detail' id=article.id slug=section.slug %}"

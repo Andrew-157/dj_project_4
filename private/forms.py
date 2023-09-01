@@ -28,7 +28,7 @@ class CreateUpdateSectionForm(forms.ModelForm):
         fields = ['title', 'number', 'content']
 
 
-class ArticleIsReadyForm(forms.ModelForm):
+class SetArticleStatusForm(forms.ModelForm):
 
     class Meta:
         model = Article

@@ -1,0 +1,17 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="container py-5">
+    <h1>Set status for article:
+        <a class="text-decoration-none" href="{% url 'private:article-detail' id=article.id %}">{{ article.title}}</a>
+    </h1>
+    {% load crispy_forms_tags %}
+    <div class="container py-5">
+        <form action="{% url 'private:set-article-status' id=article.id %}" method="post">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button class="btn btn-primary" type="submit">Set</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

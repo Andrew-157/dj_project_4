@@ -19,7 +19,7 @@ from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.forms import Form
 
-from private.forms import CreateUpdateArticleForm, CreateUpdateSectionForm
+from private.forms import CreateUpdateArticleForm, CreateUpdateSectionForm, SetArticleStatusForm
 from core.models import Article, Section
 
 
@@ -333,3 +333,27 @@ class DeleteSectionView(LoginRequiredMixin, DeleteView):
             Q(article=article)
         ).first()
         return section
+
+
+class SetArticleStatusView(LoginRequiredMixin, UpdateView):
+    form_class = SetArticleStatusForm
+    template_name = 'private/set_article_status.html'
+
+    def get_success_url(self) -> str:
+        article = self.article
+        return reverse('private:article-detail',
+                       kwargs={'id': article.id})
+
+    def get_object(self):
+        id = self.kwargs['id']
+        article = get_object_or_404(Article, id=id)
+        current_user = self.request.user
+        if article.author != current_user:
+            raise PermissionDenied
+        self.article = article
+        return article
+
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        messages.success(
+            self.request, "You successfully set the article's status.")
+        return super().form_valid(form)
