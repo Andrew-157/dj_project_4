@@ -201,11 +201,18 @@ class SectionDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class UpdateSectionBase(LoginRequiredMixin, UpdateView):
+class UpdateSectionBase(LoginRequiredMixin, View):
     redirect_to = ''
     send_post_to = ''
     template_name = 'private/update_section.html'
     form_class = CreateUpdateSectionForm
+    success_message = 'You successfully updated a section!'
+
+    def get_section(self, article: Article, slug: str):
+        return Section.objects.filter(
+            Q(article=article) &
+            Q(slug=slug)
+        ).first()
 
     def add_error_if_not_unique_number_for_section(self, form_data, article: Article, form: Form, section: Section):
         sections: list[Section] = article.sections.all()
@@ -228,57 +235,59 @@ class UpdateSectionBase(LoginRequiredMixin, UpdateView):
                 'title', f'Article already has section with this title.'
             )
 
-    def get_object(self):
-        article_id = self.kwargs['id']
-        section_slug = self.kwargs['slug']
-        article = Article.objects.filter(id=article_id).first()
-        if not article:
-            raise Http404
-        if article.author != self.request.user:
+    def get(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        current_user = self.request.user
+        if article.author != current_user:
             raise PermissionDenied
+        section_slug = self.kwargs['slug']
         sections: list[Section] = article.sections.all()
         sections_slugs = [section.slug for section in sections]
         if section_slug not in sections_slugs:
             raise Http404
-        self.article = article
-        section = Section.objects.filter(
-            Q(slug=section_slug) &
-            Q(article=article)
-        ).first()
-        return section
+        section = self.get_section(article=article, slug=self.kwargs['slug'])
+        form = self.form_class(instance=section)
+        context = {'article': article,
+                   'form': form,
+                   'section': section,
+                   'send_post_to': self.send_post_to}
+        return render(request, self.template_name, context=context)
 
-    def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        obj: Section = form.save()
-        messages.success(
-            self.request, 'You successfully updated section of your article!')
-        if self.redirect_to == 'private:section-detail':
-            return HttpResponseRedirect(reverse('private:section-detail',
-                                                kwargs={'id': self.article.id,
-                                                        'slug': obj.slug}))
-        if self.redirect_to == 'private:article-detail':
-            return HttpResponseRedirect(reverse('private:article-detail',
-                                                kwargs={'id': self.article.id}))
-
-    def get_form(self, form_class: type[BaseModelForm] | None = ...) -> BaseModelForm:
-        article = self.article
-        section = self.get_object()
-        form = self.form_class(self.request.POST, instance=section)
-        self.add_error_if_not_unique_number_for_section(form_data=self.request.POST,
+    def post(self, request, *args, **kwargs):
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        current_user = self.request.user
+        if article.author != current_user:
+            raise PermissionDenied
+        section_slug = self.kwargs['slug']
+        sections: list[Section] = article.sections.all()
+        sections_slugs = [section.slug for section in sections]
+        if section_slug not in sections_slugs:
+            raise Http404
+        section = self.get_section(article=article, slug=self.kwargs['slug'])
+        form = self.form_class(request.POST, instance=section)
+        self.add_error_if_not_unique_number_for_section(form_data=request.POST,
                                                         article=article,
                                                         form=form,
                                                         section=section)
-        self.add_error_if_not_unique_title_for_section(form_data=self.request.POST,
+        self.add_error_if_not_unique_title_for_section(form_data=request.POST,
                                                        article=article,
                                                        form=form,
                                                        section=section)
-        return form
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(**kwargs)
-        context['article'] = self.article
-        context['send_post_to'] = self.send_post_to
-        print(context)
-        return context
+        if form.is_valid():
+            form.save()
+            messages.success(request, self.success_message)
+            if self.redirect_to == 'private:section-detail':
+                return HttpResponseRedirect(reverse('private:section-detail',
+                                                    kwargs={'id': article.id,
+                                                            'slug': section.slug}))
+            if self.redirect_to == 'private:article-detail':
+                return HttpResponseRedirect(reverse('private:article-detail',
+                                                    kwargs={'id': article.id}))
+        context = {'article': article,
+                   'form': form,
+                   'section': section,
+                   'send_post_to': self.send_post_to}
+        return render(request, self.template_name, context=context)
 
 
 class UpdateSectionThroughArticleDetailView(UpdateSectionBase):

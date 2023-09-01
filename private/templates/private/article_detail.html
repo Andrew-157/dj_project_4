@@ -38,8 +38,17 @@
         </div>
         {% for section in article.sections.all|dictsort:"number" %}
         <div class="container p-3 my-3 border">
-            {{ section.number}}
-            <a href="{% url 'private:section-detail' id=article.id slug=section.slug %}">{{ section.title }}</a>
+            <a class="text-decoration-none fw-bold"
+                href="{% url 'private:section-detail' id=article.id slug=section.slug %}">{{ section.number}}.
+                {{ section.title }}</a>
+            <p>
+                {% if section.published == section.updated %}
+                Publication date: {{ section.published.date }}
+                {% else %}
+                Publication date: {{ section.published.date }}
+                Update date: {{ section.updated.date }}
+                {% endif %}
+            </p>
             <a href="{% url 'private:update-section-article-detail' id=article.id slug=section.slug %}">Update</a>
             <form action="{% url 'private:delete-section' id=article.id slug=section.slug %}" method="post">
                 {% csrf_token %}
