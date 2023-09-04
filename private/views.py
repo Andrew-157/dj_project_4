@@ -76,51 +76,66 @@ class ArticleDetailView(LoginRequiredMixin, DetailView):
         return super().get(request, *args, **kwargs)
 
 
-class UpdateArticleView(LoginRequiredMixin, UpdateView):
+class UpdateArticleBase(LoginRequiredMixin, View):
     template_name = 'private/update_article.html'
     form_class = CreateUpdateArticleForm
+    redirect_to = ''
+    send_post_to = ''
+    info_message = """You cannot update article while its status is "Ready"."""
+    success_message = 'You successfully updated your article.'
+
+    def get_redirect_url(self):
+        if self.redirect_to == 'private:article-detail':
+            return reverse('private:article-detail', kwargs={'id': self.article.id})
+        elif self.redirect_to == 'private:article-list':
+            return reverse('private:article-list')
 
     def get_object(self):
         article = get_object_or_404(Article, id=self.kwargs['id'])
         if article.author != self.request.user:
             raise PermissionDenied
+        self.article = article
         return article
 
-    def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        object: Article = form.save()
-        messages.success(
-            self.request, 'You successfully updated your article!')
-        return HttpResponseRedirect(reverse('private:article-detail',
-                                            kwargs={'id': object.id}))
-
-    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+    def get(self, request, *args, **kwargs):
         article = self.get_object()
-        self.object = article
         if article.is_ready == True:
-            messages.info(
-                request, "You cannot update article while it's status is 'Ready'.")
-            return HttpResponseRedirect(reverse('private:article-detail',
-                                                kwargs={'id': article.id}))
-        return self.render_to_response(self.get_context_data())
+            messages.info(request, self.info_message)
+            return HttpResponseRedirect(self.get_redirect_url())
+        form = self.form_class(instance=article)
+        context = {'article': article,
+                   'form': form,
+                   'send_post_to': self.send_post_to}
+        return render(request, self.template_name, context=context)
 
-    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+    def post(self, request, *args, **kwargs):
         article = self.get_object()
-        self.object = article
         if article.is_ready == True:
-            messages.info(
-                request, "You cannot update article while it's status is 'Ready'.")
-            return HttpResponseRedirect(reverse('private:article-detail',
-                                                kwargs={'id': article.id}))
-        form = self.get_form()
+            messages.info(request, self.info_message)
+            return HttpResponseRedirect(self.get_redirect_url())
+        form = self.form_class(request.POST, instance=article)
         if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
+            form.save()
+            return HttpResponseRedirect(self.get_redirect_url())
+        context = {'article': article,
+                   'form': form,
+                   'send_post_to': self.send_post_to}
+        return render(request, self.template_name, context=context)
+
+
+class UpdateArticleThroughArticleList(UpdateArticleBase):
+    redirect_to = 'private:article-list'
+    send_post_to = 'private:update-article-through-list'
+
+
+class UpdateArticleThroughArticleDetail(UpdateArticleBase):
+    redirect_to = 'private:article-detail'
+    send_post_to = 'private:update-article-through-detail'
 
 
 class DeleteArticleView(LoginRequiredMixin, DeleteView):
     http_method_names = ['post']
-    success_url = reverse_lazy('private:private-page')
+    success_url = reverse_lazy('private:article-list')
 
     def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
         messages.success(request, 'You successfully deleted your article!')
@@ -143,7 +158,7 @@ class ArticleListView(LoginRequiredMixin, ListView):
         return Article.objects.\
             filter(author=self.request.user).\
             select_related('category').all().\
-            annotate(sections_number=Count('sections'))
+            annotate(sections_number=Count('sections')).order_by('-published')
 
 
 class PostSectionView(LoginRequiredMixin, View):

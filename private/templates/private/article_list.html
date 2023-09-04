@@ -4,11 +4,56 @@
 <div class="container py-5">
     <h1>Total number of your articles: {{ articles|length }} </h1>
     {% for article in articles %}
-    <div class="container">
-        <p>Article title: {{ article.title }}</p>
-        <p>Sections number: {{ article.sections_number }}</p>
-        <a href="{% url 'private:article-detail' id=article.id %}">Visit article</a>
+    <div class="container p-3 my-3 border">
+        <p class="text-center h4"><a href="{% url 'private:article-detail' id=article.id %}">{{ article.title }}</a></p>
+        <div class="row">
+            <div class="col-sm-4">
+                <p><strong>Article's status:</strong>
+                    {% if article.is_ready == True %}
+                    <mark>Ready</mark>
+                    {% elif article.is_ready == False %}
+                    <mark>Not Ready</mark>
+                    {% endif %}
+                </p>
+                <p><strong>Number of sections:</strong> {{ article.sections_number }}</p>
+            </div>
+            <div class="col-sm-4">
+                {% if article.published == article.updated %}
+                <p><strong>Publication date:</strong> {{ article.published.date }}</p>
+                {% else %}
+                <p><strong>Publication date:</strong> {{ article.published.date }}</p>
+                <p><strong>Update date:</strong> {{ article.updated.date }}</p>
+                {% endif %}
+            </div>
+            <div class="col-sm-4">
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myModal">
+                    Delete Article
+                </button>
+                <div class="modal" id="myModal">
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h4 class="modal-title">Are you sure?</h4>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <div class="btn-group">
+                                    <form action="{% url 'private:delete-article' id=article.id %}" method="post">
+                                        {% csrf_token %}
+                                        <button class="btn btn-danger" type="submit">Yes</button>
+                                    </form>
+                                </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">No</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    {% endfor %}
+</div> <br>
+{% endfor %}
 </div>
 {% endblock %}

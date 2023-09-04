@@ -16,7 +16,8 @@
             <button class="btn btn-primary">Click here to change article's status</button>
         </form>
         <div class="container py-5">
-            <a class="btn btn-primary" href="{% url 'private:update-article' id=article.id  %}">Update article</a>
+            <a class="btn btn-primary" href="{% url 'private:update-article-through-detail' id=article.id  %}">Update
+                article</a>
 
             <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#myModal">
                 Delete Article
