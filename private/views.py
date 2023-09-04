@@ -149,6 +149,7 @@ class ArticleListView(LoginRequiredMixin, ListView):
 class PostSectionView(LoginRequiredMixin, View):
     template_name = 'private/post_section.html'
     form_class = CreateUpdateSectionForm
+    info_message = 'You cannot post new section for article while its status is "Ready".'
 
     def add_error_if_section_number_is_not_unique(self, form_data, article, form: Form):
         sections: list[Section] = article.sections.all()
@@ -172,6 +173,10 @@ class PostSectionView(LoginRequiredMixin, View):
         article = get_object_or_404(Article, id=self.kwargs['id'])
         if article.author != self.request.user:
             raise PermissionDenied
+        if article.is_ready == True:
+            messages.info(request, self.info_message)
+            return HttpResponseRedirect(reverse('private:article-detail',
+                                                kwargs={'id': article.id}))
         form = self.form_class()
         context = {'form': form,
                    'article': article}
@@ -181,6 +186,10 @@ class PostSectionView(LoginRequiredMixin, View):
         article = get_object_or_404(Article, id=self.kwargs['id'])
         if article.author != request.user:
             raise PermissionDenied
+        if article.is_ready == True:
+            messages.info(request, self.info_message)
+            return HttpResponseRedirect(reverse('private:article-detail',
+                                                kwargs={'id': article.id}))
         form = self.form_class(request.POST)
         self.add_error_if_section_number_is_not_unique(form_data=request.POST,
                                                        article=article,
