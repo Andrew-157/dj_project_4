@@ -10,6 +10,8 @@ from django.forms.models import BaseModelForm
 from django.urls import converters
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
 from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 from django.shortcuts import render
 from django.urls import reverse_lazy, reverse
 from django.views import View
@@ -18,8 +20,9 @@ from django.views.generic.edit import CreateView, UpdateView, DeleteView
 from django.shortcuts import get_object_or_404, redirect
 from django.core.exceptions import PermissionDenied
 from django.forms import Form
+from django.http import HttpRequest
 
-from private.forms import CreateUpdateArticleForm, CreateUpdateSectionForm, SetArticleStatusForm
+from private.forms import CreateUpdateArticleForm, CreateUpdateSectionForm
 from core.models import Article, Section
 
 
@@ -335,25 +338,20 @@ class DeleteSectionView(LoginRequiredMixin, DeleteView):
         return section
 
 
-class SetArticleStatusView(LoginRequiredMixin, UpdateView):
-    form_class = SetArticleStatusForm
-    template_name = 'private/set_article_status.html'
-
-    def get_success_url(self) -> str:
-        article = self.article
-        return reverse('private:article-detail',
-                       kwargs={'id': article.id})
-
-    def get_object(self):
-        id = self.kwargs['id']
-        article = get_object_or_404(Article, id=id)
-        current_user = self.request.user
-        if article.author != current_user:
-            raise PermissionDenied
-        self.article = article
-        return article
-
-    def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        messages.success(
-            self.request, "You successfully set the article's status.")
-        return super().form_valid(form)
+@login_required
+@require_http_methods(request_method_list=['POST'])
+def set_article_status(request: HttpRequest, id):
+    article = get_object_or_404(Article, id=id)
+    current_user = request.user
+    if article.author != current_user:
+        raise PermissionDenied
+    if article.is_ready == True:
+        article.is_ready = False
+        success_message = "Now article won't be shown to other users and you can modify it."
+    elif article.is_ready == False:
+        article.is_ready = True
+        success_message = "Now article will be shown to others."
+    article.save()
+    messages.success(request, success_message)
+    return HttpResponseRedirect(reverse('private:article-detail',
+                                        kwargs={'id': article.id}))

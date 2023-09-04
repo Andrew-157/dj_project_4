@@ -30,6 +30,6 @@ urlpatterns = [
          views.UpdateSectionThroughSectionDetailView.as_view(), name='update-section-section-detail'),
     path('you/articles/<uuid:id>/sections/<str:slug>/delete/', views.DeleteSectionView.as_view(),
          name='delete-section'),
-    path('you/articles/<uuid:id>/set_status/', views.SetArticleStatusView.as_view(),
+    path('you/articles/<uuid:id>/set_status/', views.set_article_status,
          name='set-article-status')
 ]

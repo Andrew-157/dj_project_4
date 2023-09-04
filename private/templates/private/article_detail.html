@@ -4,6 +4,17 @@
 <div class="container py-5">
     <div class="text-center">
         <h1><mark>{{ article.title }}</mark></h1>
+        {% if article.is_ready == True %}
+        <h3>Article's status: <strong>Ready</strong></h3>
+        {% elif article.is_ready == False %}
+        <h3>Article's status: <strong>Not Ready</strong></h3>
+        {% endif %}
+        <p class="text-muted">Articles with status "Ready" are shown to users while articles with status "Not Ready" are
+            not.</p>
+        <form action="{% url 'private:set-article-status' id=article.id %}" method="post">
+            {% csrf_token %}
+            <button class="btn btn-primary">Click here to change article's status</button>
+        </form>
         <div class="container py-5">
             <a class="btn btn-primary" href="{% url 'private:update-article' id=article.id  %}">Update article</a>
 
