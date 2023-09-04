@@ -220,10 +220,6 @@ class SectionDetailView(LoginRequiredMixin, DetailView):
             raise Http404
         if article.author != self.request.user:
             raise PermissionDenied
-        sections: list[Section] = article.sections.all()
-        sections_slugs = [section.slug for section in sections]
-        if section_slug not in sections_slugs:
-            raise Http404
         self.article = article
         section = Section.objects.filter(
             Q(slug=section_slug) &
@@ -243,12 +239,17 @@ class UpdateSectionBase(LoginRequiredMixin, View):
     template_name = 'private/update_section.html'
     form_class = CreateUpdateSectionForm
     success_message = 'You successfully updated a section!'
+    info_message = """You cannot update a section while article's status is "Ready"."""
 
-    def get_section(self, article: Article, slug: str):
-        return Section.objects.filter(
+    def get_section(self, article: Article, slug: str) -> Http404 | Section:
+        section = Section.objects.filter(
             Q(article=article) &
             Q(slug=slug)
         ).first()
+        if not section:
+            raise Http404
+        else:
+            return section
 
     def add_error_if_not_unique_number_for_section(self, form_data, article: Article, form: Form, section: Section):
         sections: list[Section] = article.sections.all()
@@ -276,12 +277,11 @@ class UpdateSectionBase(LoginRequiredMixin, View):
         current_user = self.request.user
         if article.author != current_user:
             raise PermissionDenied
-        section_slug = self.kwargs['slug']
-        sections: list[Section] = article.sections.all()
-        sections_slugs = [section.slug for section in sections]
-        if section_slug not in sections_slugs:
-            raise Http404
         section = self.get_section(article=article, slug=self.kwargs['slug'])
+        if article.is_ready == True:
+            messages.info(self.request, self.info_message)
+            return HttpResponseRedirect(reverse('private:article-detail',
+                                                kwargs={'id': article.id}))
         form = self.form_class(instance=section)
         context = {'article': article,
                    'form': form,
@@ -294,12 +294,11 @@ class UpdateSectionBase(LoginRequiredMixin, View):
         current_user = self.request.user
         if article.author != current_user:
             raise PermissionDenied
-        section_slug = self.kwargs['slug']
-        sections: list[Section] = article.sections.all()
-        sections_slugs = [section.slug for section in sections]
-        if section_slug not in sections_slugs:
-            raise Http404
         section = self.get_section(article=article, slug=self.kwargs['slug'])
+        if article.is_ready == True:
+            messages.info(self.request, self.info_message)
+            return HttpResponseRedirect(reverse('private:article-detail',
+                                                kwargs={'id': article.id}))
         form = self.form_class(request.POST, instance=section)
         self.add_error_if_not_unique_number_for_section(form_data=request.POST,
                                                         article=article,
@@ -346,10 +345,16 @@ class DeleteSectionView(LoginRequiredMixin, DeleteView):
                                   'id': article.id})
         return success_url
 
-    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+    def form_valid(self, form):
+        success_url = self.get_success_url()
+        if self.article.is_ready == True:
+            messages.info(
+                self.request, """You cannot delete a section while article's status is "Ready".""")
+            return HttpResponseRedirect(success_url)
+        self.object.delete()
         messages.success(
-            request, 'You successfully deleted a section for the article.')
-        return super().post(request, *args, **kwargs)
+            self.request, 'You successfully deleted a section for the article.')
+        return HttpResponseRedirect(success_url)
 
     def get_object(self):
         article_id = self.kwargs['id']
@@ -359,10 +364,6 @@ class DeleteSectionView(LoginRequiredMixin, DeleteView):
             raise Http404
         if article.author != self.request.user:
             raise PermissionDenied
-        sections: list[Section] = article.sections.all()
-        sections_slugs = [section.slug for section in sections]
-        if section_slug not in sections_slugs:
-            raise Http404
         self.article = article
         section = Section.objects.filter(
             Q(slug=section_slug) &
