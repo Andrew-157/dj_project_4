@@ -93,6 +93,30 @@ class UpdateArticleView(LoginRequiredMixin, UpdateView):
         return HttpResponseRedirect(reverse('private:article-detail',
                                             kwargs={'id': object.id}))
 
+    def get(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        article = self.get_object()
+        self.object = article
+        if article.is_ready == True:
+            messages.info(
+                request, "You cannot update article while it's status is 'Ready'.")
+            return HttpResponseRedirect(reverse('private:article-detail',
+                                                kwargs={'id': article.id}))
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request: HttpRequest, *args: str, **kwargs: Any) -> HttpResponse:
+        article = self.get_object()
+        self.object = article
+        if article.is_ready == True:
+            messages.info(
+                request, "You cannot update article while it's status is 'Ready'.")
+            return HttpResponseRedirect(reverse('private:article-detail',
+                                                kwargs={'id': article.id}))
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
 
 class DeleteArticleView(LoginRequiredMixin, DeleteView):
     http_method_names = ['post']
