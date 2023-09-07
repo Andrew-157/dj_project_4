@@ -4,6 +4,7 @@
 <div class="container py-5">
     <div class="text-center">
         <h1><mark>{{ article.title }}</mark></h1>
+        <a class="text-decoration-none" href="{% url 'private:article-list' %}">Back to your articles</a>
         {% if article.is_ready == True %}
         <h3>Article's status: <strong>Ready</strong></h3>
         {% elif article.is_ready == False %}

@@ -116,6 +116,7 @@ class UpdateArticleBase(LoginRequiredMixin, View):
         form = self.form_class(request.POST, instance=article)
         if form.is_valid():
             form.save()
+            messages.success(request, self.success_message)
             return HttpResponseRedirect(self.get_redirect_url())
         context = {'article': article,
                    'form': form,
