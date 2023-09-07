@@ -3,12 +3,18 @@
 
 {% block content %}
 <div class="container py-5">
-    <h1>Your private page, {{ user }}</h1>
-    <p>
-        See short guide about how to publish article:
-        <a href="{% url 'private:guide' %}">Guide</a>
-    </p>
-    <a href="{% url 'private:post-article' %}">Post new article</a>
-    <a href="{% url 'private:article-list' %}">All your articles</a>
+    <div class="text-center">
+        <h1>Your private page, <a href="{% url 'private:private-page' %}">{{ user }}</a></h1>
+    </div>
+    <div class="container p-3 my-3 text-center">
+        <div class="row">
+            <div class="col-sm-6">
+                <a class="btn btn-primary btn-lg" href="{% url 'private:post-article' %}">Post new article</a>
+            </div>
+            <div class="col-sm-6">
+                <a class="btn btn-primary btn-lg" href="{% url 'private:article-list' %}">All your articles</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
