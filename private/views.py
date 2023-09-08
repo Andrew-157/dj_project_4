@@ -8,7 +8,7 @@ from django.db.models import Count
 from django.db.models.query import QuerySet
 from django.forms.models import BaseModelForm
 from django.urls import converters
-from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect, Http404, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
@@ -154,12 +154,25 @@ class DeleteArticleView(LoginRequiredMixin, DeleteView):
 class ArticleListView(LoginRequiredMixin, ListView):
     template_name = 'private/article_list.html'
     context_object_name = 'articles'
+    allowed_orderings = ['sections', '-sections', 'published', '-published']
+
+    def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
+        ordering = self.request.GET.get('ordering')
+        if ordering and ordering not in self.allowed_orderings:
+            return HttpResponseBadRequest()
+        self.ordering = ordering
+        return super().get(request, *args, **kwargs)
 
     def get_queryset(self) -> QuerySet[Any]:
-        return Article.objects.\
+        queryset = Article.objects.\
             filter(author=self.request.user).\
             select_related('category').all().\
-            annotate(sections_number=Count('sections')).order_by('-published')
+            annotate(sections_number=Count('sections'))
+        ordering = self.ordering
+        if not ordering:
+            return queryset.order_by('-id')
+        else:
+            return queryset.order_by(ordering)
 
 
 class PostSectionView(LoginRequiredMixin, View):

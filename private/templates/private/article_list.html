@@ -7,6 +7,25 @@
         <a class="btn btn-primary text-decoration-none" href="{% url 'private:post-article' %}">Post new
             article</a>
     </div>
+    <div class="dropdown">
+        <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+            Sort Your Articles By
+        </button>
+        <ul class="dropdown-menu">
+            <li><a href="{% url 'private:article-list' %}?ordering=-sections" class="dropdown-item">
+                    The number of sections in Descending order
+                </a></li>
+            <li><a href="{% url 'private:article-list' %}?ordering=sections" class="dropdown-item">
+                    The number of sections in Ascending order
+                </a></li>
+            <li><a href="{% url 'private:article-list' %}?ordering=-published" class="dropdown-item">
+                    Publication date in Descending order
+                </a></li>
+            <li><a href="{% url 'private:article-list' %}?ordering=published" class="dropdown-item">
+                    Publication date in Ascending order
+                </a></li>
+        </ul>
+    </div>
     {% for article in articles %}
     <div class="container p-3 my-3 border">
         <p class="text-center h4"><a href="{% url 'private:article-detail' id=article.id %}">{{ article.title }}</a></p>
