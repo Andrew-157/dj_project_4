@@ -19,6 +19,10 @@ class Category(models.Model):
         return self.title
 
 
+class Tag(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+
 class Article(models.Model):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4,
@@ -33,6 +37,7 @@ class Article(models.Model):
     published = models.DateTimeField(auto_now_add=True, null=True)
     updated = models.DateTimeField(auto_now=True)
     is_ready = models.BooleanField(default=False)
+    tags = models.ManyToManyField('core.Tag')
 
     def __str__(self):
         return str(self.id) + ' ' + self.title
