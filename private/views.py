@@ -94,7 +94,8 @@ class ArticleDetailView(LoginRequiredMixin, DetailView):
         # Getting object like this is necessary because default implementation
         # does not understand uuid as id
         article = Article.objects.\
-            select_related('author', 'category').filter(
+            select_related('author', 'category').\
+            filter(
                 id=self.kwargs['id']).first()
         if not article:
             raise Http404
@@ -230,7 +231,8 @@ class ArticleListView(LoginRequiredMixin, ListView):
     def get_queryset(self) -> QuerySet[Any]:
         queryset = Article.objects.\
             filter(author=self.request.user).\
-            select_related('category').all().\
+            select_related('category').\
+            prefetch_related('tags').all().\
             annotate(sections_number=Count('sections'))
         ordering = self.ordering
         if not ordering:
@@ -467,7 +469,7 @@ class DeleteSectionView(LoginRequiredMixin, DeleteView):
 
 @login_required
 @require_http_methods(request_method_list=['POST'])
-def set_article_status(request: HttpRequest, id):
+def set_article_status_through_article_detail(request: HttpRequest, id):
     article = get_object_or_404(Article, id=id)
     current_user = request.user
     if article.author != current_user:
@@ -479,6 +481,24 @@ def set_article_status(request: HttpRequest, id):
         article.is_ready = True
         success_message = "Now article will be shown to others."
     article.save()
-    messages.success(request, success_message)
+    messages.success(request, message=success_message)
     return HttpResponseRedirect(reverse('private:article-detail',
                                         kwargs={'id': article.id}))
+
+
+@login_required
+@require_http_methods(request_method_list=['POST'])
+def set_article_status_through_article_list(request: HttpRequest, id):
+    article = get_object_or_404(Article, id=id)
+    current_user = request.user
+    if article.author != current_user:
+        raise PermissionDenied
+    if article.is_ready == True:
+        article.is_ready = False
+        success_message = "Now article won't be shown to other users and you can modify it."
+    elif article.is_ready == False:
+        article.is_ready = True
+        success_message = "Now article will be shown to others."
+    article.save()
+    messages.success(request, message=success_message)
+    return HttpResponseRedirect(reverse('private:article-list'))

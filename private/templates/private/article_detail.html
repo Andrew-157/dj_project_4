@@ -4,6 +4,14 @@
 <div class="container py-5">
     <div class="text-center">
         <h1><mark>{{ article.title }}</mark></h1>
+        <h2>Category: <a href="" class="text-decoration-none">{{ article.category }}</a></h2>
+        <div class="container">
+            {% for tag in article.tags.all %}
+            <a class="text-decoration-none" href="">
+                <span class="badge bg-info">{{ tag.name }}</span>
+            </a>
+            {% endfor %}
+        </div>
         <a class="text-decoration-none" href="{% url 'private:article-list' %}">To your articles</a>
         {% if article.is_ready == True %}
         <h3>Article's status: <strong>Ready</strong></h3>
@@ -12,7 +20,7 @@
         {% endif %}
         <p class="text-muted">Articles with status "Ready" are shown to users while articles with status "Not Ready" are
             not.</p>
-        <form action="{% url 'private:set-article-status' id=article.id %}" method="post">
+        <form action="{% url 'private:set-article-status-through-detail' id=article.id %}" method="post">
             {% csrf_token %}
             <button class="btn btn-primary">Click here to change article's status</button>
         </form>
@@ -45,11 +53,12 @@
                 </div>
             </div>
         </div>
+        {% with sections=article.sections.all %}
         <div class="container py-5">
-            <h3>Number of sections currently created: <mark>{{ article.sections.all|length }}</mark></h3>
+            <h3>Number of sections currently created: <mark>{{ sections|length }}</mark></h3>
             <a href="{% url 'private:post-section' id=article.id %}" class="text-decoration-none">Create new section</a>
         </div>
-        {% for section in article.sections.all|dictsort:"number" %}
+        {% for section in sections|dictsort:"number" %}
         <div class="container p-3 my-3 border">
             <a class="text-decoration-none fw-bold"
                 href="{% url 'private:section-detail' id=article.id slug=section.slug %}">{{ section.number}}.
@@ -76,6 +85,7 @@
             </div>
         </div>
         {% endfor %}
+        {% endwith %}
     </div>
 </div>
 {% endblock %}

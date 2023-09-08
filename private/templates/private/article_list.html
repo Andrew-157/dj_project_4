@@ -29,15 +29,26 @@
     {% for article in articles %}
     <div class="container p-3 my-3 border">
         <p class="text-center h4"><a href="{% url 'private:article-detail' id=article.id %}">{{ article.title }}</a></p>
+        <p class="text-center h5">Category: <a href="">{{ article.category }}</a></p>
+        <div class="container text-center">
+            {% for tag in article.tags.all %}
+            <a class="text-decoration-none" href="">
+                <span class="badge bg-info">{{ tag.name }}</span>
+            </a>
+            {% endfor %}
+        </div>
         <div class="row">
             <div class="col-sm-4">
-                <p><strong>Article's status:</strong>
+                <form action="{% url 'private:set-article-status-through-list' id=article.id %}" class="form-inline"
+                    method="post">
+                    {% csrf_token %}
+                    <label><strong>Article's status: </strong></label>
                     {% if article.is_ready == True %}
-                    <mark>Ready</mark>
+                    <button class="btn btn-primary btn-sm">Ready</button>
                     {% elif article.is_ready == False %}
-                    <mark>Not Ready</mark>
+                    <button class="btn btn-secondary btn-sm">Not Ready</button>
                     {% endif %}
-                </p>
+                </form>
                 <p><strong>Number of sections:</strong> {{ article.sections_number }}</p>
             </div>
             <div class="col-sm-4">

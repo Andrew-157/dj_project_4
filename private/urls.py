@@ -32,6 +32,9 @@ urlpatterns = [
          views.UpdateSectionThroughSectionDetailView.as_view(), name='update-section-section-detail'),
     path('you/articles/<uuid:id>/sections/<str:slug>/delete/', views.DeleteSectionView.as_view(),
          name='delete-section'),
-    path('you/articles/<uuid:id>/set_status/', views.set_article_status,
-         name='set-article-status')
+    path('you/articles/<uuid:id>/set_status/detail/', views.set_article_status_through_article_detail,
+         name='set-article-status-through-detail'),
+     path('you/articles/<uuid:id>/set_status/list/', views.set_article_status_through_article_list,
+          name='set-article-status-through-list')
+
 ]
