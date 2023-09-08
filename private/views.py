@@ -63,7 +63,7 @@ class PostArticleView(LoginRequiredMixin, CreateView):
         tag_objects = []
         tags_str_list = self.parse_tags(tags_str=tags_str)
         for tag in tags_str_list:
-            tag = '-'.join(tag.split(' '))
+            tag = '-'.join(tag.split(' ')).lower()
             tag_object = Tag.objects.filter(name=tag).first()
             if tag_object:
                 tag_objects.append(tag_object)
@@ -128,12 +128,42 @@ class UpdateArticleBase(LoginRequiredMixin, View):
         self.article = article
         return article
 
+    def parse_tags(self, tags_str: str) -> list[str]:
+        result = []
+        splitted_tags = tags_str.split(',')
+        for tag in splitted_tags:
+            if tag.isspace():
+                continue
+            elif not tag:
+                continue
+            else:
+                result.append(tag.strip())
+
+        return result
+
+    def get_tags_objects(self, tags_str: str) -> list[Tag]:
+        tag_objects = []
+        tags_str_list = self.parse_tags(tags_str=tags_str)
+        for tag in tags_str_list:
+            tag = tag.replace(' ', '-').lower()
+            tag_object = Tag.objects.filter(name=tag).first()
+            if tag_object:
+                tag_objects.append(tag_object)
+            else:
+                tag_object = Tag(name=tag)
+                tag_object.save()
+                tag_objects.append(tag_object)
+
+        return tag_objects
+
     def get(self, request, *args, **kwargs):
         article = self.get_object()
         if article.is_ready == True:
             messages.info(request, self.info_message)
             return HttpResponseRedirect(self.get_redirect_url())
-        form = self.form_class(instance=article)
+        tags_string = ', '.join([tag.name for tag in article.tags.all()])
+        form = self.form_class(
+            instance=article, initial={'tags_string': tags_string})
         context = {'article': article,
                    'form': form,
                    'send_post_to': self.send_post_to}
@@ -146,7 +176,10 @@ class UpdateArticleBase(LoginRequiredMixin, View):
             return HttpResponseRedirect(self.get_redirect_url())
         form = self.form_class(request.POST, instance=article)
         if form.is_valid():
-            form.save()
+            obj: Article = form.save()
+            tag_objects = self.get_tags_objects(
+                tags_str=self.request.POST['tags_string'])
+            obj.tags.set(tag_objects)
             messages.success(request, self.success_message)
             return HttpResponseRedirect(self.get_redirect_url())
         context = {'article': article,

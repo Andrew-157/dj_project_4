@@ -24,6 +24,9 @@ class Tag(models.Model):
                             unique=True,
                             validators=[MinLengthValidator(2)])
 
+    def __str__(self):
+        return self.name
+
 
 class Article(models.Model):
     id = models.UUIDField(
