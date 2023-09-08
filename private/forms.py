@@ -11,10 +11,14 @@ class CreateUpdateArticleForm(forms.ModelForm):
     title = forms.CharField(help_text="Title may be something like this: Ionic compounds' role in nutrition.",
                             max_length=255,
                             min_length=5)
+    tags_string = forms.CharField(help_text="Enter tags, separating them with comma.#-sign is not necessary.",
+                                  max_length=500,
+                                  min_length=2,
+                                  label='Tags', required=False)
 
     class Meta:
         model = Article
-        fields = ['title', 'category']
+        fields = ['title', 'category', 'tags_string']
 
 
 class CreateUpdateSectionForm(forms.ModelForm):

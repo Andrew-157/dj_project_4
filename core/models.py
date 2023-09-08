@@ -20,7 +20,9 @@ class Category(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=255, unique=True)
+    name = models.CharField(max_length=255,
+                            unique=True,
+                            validators=[MinLengthValidator(2)])
 
 
 class Article(models.Model):

@@ -23,7 +23,7 @@ from django.forms import Form
 from django.http import HttpRequest
 
 from private.forms import CreateUpdateArticleForm, CreateUpdateSectionForm
-from core.models import Article, Section
+from core.models import Article, Section, Tag
 
 
 class UUIDConverter(converters.StringConverter):
@@ -46,9 +46,40 @@ class PostArticleView(LoginRequiredMixin, CreateView):
     form_class = CreateUpdateArticleForm
     model = Article
 
+    def parse_tags(self, tags_str: str) -> list[str]:
+        result = []
+        splitted_tags_str = tags_str.split(',')
+        for tag in splitted_tags_str:
+            if not tag:
+                continue
+            elif tag.isspace():
+                continue
+            else:
+                result.append(tag.strip())
+
+        return result
+
+    def get_tags_objects(self, tags_str: str) -> list[Tag]:
+        tag_objects = []
+        tags_str_list = self.parse_tags(tags_str=tags_str)
+        for tag in tags_str_list:
+            tag = '-'.join(tag.split(' '))
+            tag_object = Tag.objects.filter(name=tag).first()
+            if tag_object:
+                tag_objects.append(tag_object)
+            else:
+                tag_object = Tag(name=tag)
+                tag_object.save()
+                tag_objects.append(tag_object)
+
+        return tag_objects
+
     def form_valid(self, form) -> HttpResponse:
         form.instance.author = self.request.user
-        self.object = form.save()
+        self.object: Article = form.save()
+        tag_objects = self.get_tags_objects(
+            tags_str=self.request.POST['tags_string'])
+        self.object.tags.set(tag_objects)
         messages.success(
             self.request, 'Great! You posted new article. Now add some sections to it.')
         return HttpResponseRedirect(reverse('private:article-detail',
