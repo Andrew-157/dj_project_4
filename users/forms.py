@@ -94,6 +94,12 @@ class LoginWithEmailForm(AuthenticationForm):
             'invalid_login': "Please enter a correct email and password. Note that both fields may be case-sensitive.",
             'inactive': "This account is inactive.",
         }
+        self.fields['username'].widget = forms.EmailInput(
+            attrs={'placeholder': 'Enter email you used during registration'}
+        )
+        self.fields['password'].widget = forms.PasswordInput(
+            attrs={'placeholder': 'Enter password you used during registration'}
+        )
 
     def clean(self):
         cleaned_data = super().clean()

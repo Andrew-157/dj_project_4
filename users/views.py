@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.utils.decorators import method_decorator
 from django.forms import Form
+from django import forms
 from django.shortcuts import render, redirect
 from django.utils import timezone
 from django.views import View
@@ -66,6 +67,12 @@ class LoginWithUsernameView(View):
 
     def get(self, request, *args, **kwargs):
         form = self.form_class()
+        form.fields['username'].widget = \
+            forms.TextInput(
+                attrs={'placeholder': 'Enter username you used during registration'})
+        form.fields['password'].widget = \
+            forms.PasswordInput(
+                attrs={'placeholder': 'Enter password you used during registration'})
         return render(request, self.template_name,
                       {'form': form,
                        'username': True})
