@@ -469,41 +469,87 @@ class DeleteSectionView(LoginRequiredMixin, DeleteView):
         return section
 
 
-@login_required
-@require_http_methods(request_method_list=['POST'])
-def set_article_status_through_article_detail(request: HttpRequest, id):
-    article = get_object_or_404(Article, id=id)
-    current_user = request.user
-    if article.author != current_user:
-        raise PermissionDenied
-    if article.is_ready == True:
-        article.is_ready = False
-        success_message = "Now article won't be shown to other users and you can modify it."
-    elif article.is_ready == False:
-        article.is_ready = True
-        success_message = "Now article will be shown to others."
-    article.save()
-    messages.success(request, message=success_message)
-    return HttpResponseRedirect(reverse('private:article-detail',
-                                        kwargs={'id': article.id}))
+class SetArticleStatusBase(LoginRequiredMixin, View):
+    http_method_names = ['post']
+
+    def sections_numbers_has_1(self, sections: list[Section]):
+        numbers_of_sections = [section.number for section in sections]
+
+        if 1 not in numbers_of_sections:
+            return False
+        return True
+
+    def sections_numbers_are_consecutive_integers(self, sections: list[Section]):
+        numbers_of_sections = [section.number for section in sections]
+        numbers_of_sections = sorted(numbers_of_sections)
+
+        first_number = numbers_of_sections[0]
+        last_number = numbers_of_sections[-1]
+
+        expected_numbers = []
+        expected_numbers.append(first_number)
+
+        while first_number != last_number:
+            first_number += 1
+            expected_numbers.append(first_number)
+
+        if expected_numbers != numbers_of_sections:
+            return False
+        return True
+
+    def get_redirect_url(self) -> HttpResponseRedirect:
+        pass
+
+    def post(self, request: HttpRequest, *args, **kwargs):
+        current_user = request.user
+        article = get_object_or_404(Article, id=self.kwargs['id'])
+        if article.author != current_user:
+            raise PermissionDenied
+        self.article = article
+        if article.is_ready == False:
+            # If status 'Not Ready', then it means user wants to
+            # change it to 'Ready' and some checks will we done
+            sections: list[Section] = article.sections.all()
+            if not sections:
+                messages.info(request,
+                              message='Create at least one section before setting status to "Ready".')
+                return self.get_redirect_url()
+            if not self.sections_numbers_has_1(sections=sections):
+                messages.info(
+                    request,
+                    message='Make sure that there is a section with number 1 among sections of this article.'
+                )
+                return self.get_redirect_url()
+            if not self.sections_numbers_are_consecutive_integers(sections=sections):
+                messages.info(
+                    request,
+                    message='Make sure numbers of your sections are consecutive integers.'
+                )
+                return self.get_redirect_url()
+            article.is_ready = True
+            article.save()
+            messages.success(
+                request, message="Now article will be shown to others.")
+            return self.get_redirect_url()
+        if article.is_ready == True:
+            article.is_ready = False
+            article.save()
+            messages.success(
+                request, message="Now article won't be shown to other users and you can modify it.")
+            return self.get_redirect_url()
 
 
-@login_required
-@require_http_methods(request_method_list=['POST'])
-def set_article_status_through_article_list(request: HttpRequest, id):
-    article = get_object_or_404(Article, id=id)
-    current_user = request.user
-    if article.author != current_user:
-        raise PermissionDenied
-    if article.is_ready == True:
-        article.is_ready = False
-        success_message = "Now article won't be shown to other users and you can modify it."
-    elif article.is_ready == False:
-        article.is_ready = True
-        success_message = "Now article will be shown to others."
-    article.save()
-    messages.success(request, message=success_message)
-    return HttpResponseRedirect(reverse('private:article-list'))
+class SetArticleStatusThroughArticleDetailView(SetArticleStatusBase):
+
+    def get_redirect_url(self) -> HttpResponseRedirect:
+        return HttpResponseRedirect(reverse('private:article-detail',
+                                            kwargs={'id': self.article.id}))
+
+
+class SetArticleStatusThroughArticleListView(SetArticleStatusBase):
+
+    def get_redirect_url(self) -> HttpResponseRedirect:
+        return HttpResponseRedirect(reverse('private:article-list'))
 
 
 @login_required
