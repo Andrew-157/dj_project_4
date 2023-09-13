@@ -12,6 +12,9 @@ class RegistrationStep1Form(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['username', 'email']
+        widgets = {
+            'username': forms.TextInput(attrs={'placeholder': 'Enter your username'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'Enter your email'})}
 
     def clean(self):
         cleaned_data = super().clean()
@@ -32,9 +35,11 @@ class RegistrationStep1Form(forms.ModelForm):
 class RegistrationStep2Form(forms.Form):
 
     first_name = forms.CharField(max_length=255, required=False,
-                                 help_text='Optional.')
+                                 help_text='Optional.',
+                                 widget=forms.TextInput(attrs={'placeholder': 'Enter your first name'}))
     last_name = forms.CharField(max_length=255, required=False,
-                                help_text='Optional.')
+                                help_text='Optional.',
+                                widget=forms.TextInput(attrs={'placeholder': 'Enter your last name'}))
 
     def clean(self):
         cleaned_data = super().clean()
@@ -57,9 +62,23 @@ class RegistrationStep3Form(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ['position']
+        widgets = {
+            'position': forms.TextInput(attrs={'placeholder': 'Enter your position'})
+        }
 
 
 class RegistrationStep4Form(UserCreationForm):
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super(RegistrationStep4Form, self).__init__(*args, **kwargs)
+        self.fields['password1'].widget = forms.PasswordInput(
+            attrs={"autocomplete": "new-password",
+                   "placeholder": "Enter your password"}
+        )
+        self.fields['password2'].widget = forms.PasswordInput(
+            attrs={"autocomplete": "new-password",
+                   "placeholder": "Enter the same password", }
+        )
 
     class Meta:
         model = CustomUser

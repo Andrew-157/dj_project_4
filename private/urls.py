@@ -34,7 +34,7 @@ urlpatterns = [
          name='delete-section'),
     path('you/articles/<uuid:id>/set_status/detail/', views.set_article_status_through_article_detail,
          name='set-article-status-through-detail'),
-     path('you/articles/<uuid:id>/set_status/list/', views.set_article_status_through_article_list,
-          name='set-article-status-through-list')
-
+    path('you/articles/<uuid:id>/set_status/list/', views.set_article_status_through_article_list,
+         name='set-article-status-through-list'),
+    path('you/articles/search/', views.search_for_articles, name='search-articles')
 ]

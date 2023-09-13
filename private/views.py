@@ -123,7 +123,9 @@ class UpdateArticleBase(LoginRequiredMixin, View):
             return reverse('private:article-list')
 
     def get_object(self):
-        article = get_object_or_404(Article, id=self.kwargs['id'])
+        article = Article.objects.\
+            filter(id=self.kwargs['id']).\
+            select_related('author').first()
         if article.author != self.request.user:
             raise PermissionDenied
         self.article = article
@@ -502,3 +504,21 @@ def set_article_status_through_article_list(request: HttpRequest, id):
     article.save()
     messages.success(request, message=success_message)
     return HttpResponseRedirect(reverse('private:article-list'))
+
+
+@login_required
+@require_http_methods(request_method_list=['GET'])
+def search_for_articles(request: HttpRequest):
+    query = request.GET.get('query')
+    if not query:
+        return redirect('private:article-list')
+    current_user = request.user
+    articles = Article.objects.\
+        filter(
+            Q(title__icontains=query) &
+            Q(author=current_user)).\
+        select_related('category').prefetch_related('tags').all().\
+        order_by('-published')
+    return render(request, 'private/search_results.html',
+                  context={'articles': articles,
+                           'query': query})

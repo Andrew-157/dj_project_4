@@ -2,6 +2,13 @@
 
 {% block content %}
 <div class="container py-5">
+    <div class="d-flex justify-content-center">
+        <form class="d-flex" action="{% url 'private:search-articles' %}" method="get">
+            <input style="width: 500px; height: 50px;" type="text" class="form-control me-2"
+                placeholder="Search for an article among all your articles" name="query">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+    </div>
     <div class="text-center">
         <h1>Total number of your articles: {{ articles|length }} </h1>
         <a class="btn btn-primary text-decoration-none" href="{% url 'private:post-article' %}">Post new
