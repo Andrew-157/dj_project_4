@@ -3,14 +3,15 @@
 
 {% block content %}
 <div class="container py-5">
-    <h1 class="text-center">Number of found articles: <mark>{{ articles|length }}</mark></h1>
-    <h2 class="text-center">Search request: <strong>{{ query }}</strong></h2>
+    <div class="text-center">
+        <h1>Number of found articles: <mark>{{ articles|length }}</mark></h1>
+        <h2>Search request: <strong>{{ query }}</strong></h2>
+        <a href="{% url 'private:article-list' %}" class="text-decoration-none">To your articles</a>
+    </div>
     {% for article in articles %}
     <div class="container p-3 my-3 border">
-        <p>Article:
-            <a href="{% url 'private:article-detail' id=article.id %}" class="text-decoration-none">{{ article.title
-                }}</a>
-        </p>
+        <p><strong>Article:</strong> <mark>{{ article.title }}</mark></p>
+        <a href="{% url 'private:article-detail' id=article.id %}">Click Here to visit article's page</a>
     </div>
     {% endfor %}
 </div>
