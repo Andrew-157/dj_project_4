@@ -5,8 +5,15 @@
     <div class="d-flex justify-content-center">
         <form class="d-flex" action="{% url 'private:search-articles' %}" method="get">
             <input style="width: 500px; height: 50px;" type="text" class="form-control me-2"
-                placeholder="Search for an article among all your articles" name="query">
-            <button class="btn btn-primary" type="submit">Search</button>
+                placeholder="Search for your articles" name="query">
+            <button class="btn btn-primary" data-bs-toggle="tooltip" type="submit"
+                title="Search will be accomplished using articles' title, category and tags">Search</button>
+            <script>
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                })
+            </script>
         </form>
     </div>
     <div class="text-center">

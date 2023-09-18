@@ -560,8 +560,11 @@ def search_for_articles(request: HttpRequest):
     if not query:
         return redirect('private:article-list')
     current_user = request.user
+    tag_object = Tag.objects.filter(name__icontains=query).first()
     articles = Article.objects.\
-        filter(Q(title__icontains=query) & Q(author=current_user)).\
+        filter(Q(title__icontains=query) |
+               Q(category__title__icontains=query) |
+               Q(tags=tag_object)).filter(author=current_user).\
         all().order_by('-published')
     return render(request, 'private/search_results.html',
                   context={'articles': articles,
