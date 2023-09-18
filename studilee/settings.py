@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'users',
     'core',
     'private',
+    'public',
     'debug_toolbar',
 ]
 
