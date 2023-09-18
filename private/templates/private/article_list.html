@@ -19,10 +19,10 @@
             Sort Your Articles By
         </button>
         <ul class="dropdown-menu">
-            <li><a href="{% url 'private:article-list' %}?ordering=-sections" class="dropdown-item">
+            <li><a href="{% url 'private:article-list' %}?ordering=-sections_number" class="dropdown-item">
                     The number of sections in Descending order
                 </a></li>
-            <li><a href="{% url 'private:article-list' %}?ordering=sections" class="dropdown-item">
+            <li><a href="{% url 'private:article-list' %}?ordering=sections_number" class="dropdown-item">
                     The number of sections in Ascending order
                 </a></li>
             <li><a href="{% url 'private:article-list' %}?ordering=-published" class="dropdown-item">

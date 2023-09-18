@@ -221,7 +221,8 @@ class DeleteArticleView(LoginRequiredMixin, DeleteView):
 class ArticleListView(LoginRequiredMixin, ListView):
     template_name = 'private/article_list.html'
     context_object_name = 'articles'
-    allowed_orderings = ['sections', '-sections', 'published', '-published']
+    allowed_orderings = ['sections_number', '-sections_number',
+                         'published', '-published']
 
     def get(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         ordering = self.request.GET.get('ordering')
